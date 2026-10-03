@@ -2,6 +2,7 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Brain, BrainCircuit, House, HousePlug, UserRoundPlus } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AnimatedTabIcon } from '@/components/animated-tab-icon';
 import { useTheme } from '@/hooks/use-theme';
 
 const tabIcons = {
@@ -20,7 +21,7 @@ export function CustomTabBar({ state, descriptors, navigation, insets }: BottomT
         {
           backgroundColor: theme.background,
           borderTopColor: theme.backgroundElement,
-          paddingBottom: Math.max(insets.bottom, 12),
+          paddingBottom: Math.min(insets.bottom, 12),
         },
       ]}>
       <View style={styles.tabs}>
@@ -30,7 +31,6 @@ export function CustomTabBar({ state, descriptors, navigation, insets }: BottomT
 
           const { options } = descriptors[route.key];
           const focused = state.index === index;
-          const Icon = focused ? icons.active : icons.inactive;
           const color = focused ? theme.text : theme.textSecondary;
           const label = options.title ?? route.name;
 
@@ -58,7 +58,7 @@ export function CustomTabBar({ state, descriptors, navigation, insets }: BottomT
                 { backgroundColor: focused ? theme.backgroundSelected : 'transparent' },
                 pressed && styles.pressed,
               ]}>
-              <Icon size={24} color={color} strokeWidth={focused ? 2.2 : 1.8} />
+              <AnimatedTabIcon {...icons} focused={focused} />
               <Text style={[styles.label, { color }, focused && styles.selectedLabel]}>
                 {label}
               </Text>
@@ -73,7 +73,6 @@ export function CustomTabBar({ state, descriptors, navigation, insets }: BottomT
 const styles = StyleSheet.create({
   container: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 10,
     paddingHorizontal: 16,
   },
   tabs: {
@@ -81,6 +80,7 @@ const styles = StyleSheet.create({
     gap: 8,
     width: '100%',
     maxWidth: 480,
+    paddingTop: 8,
     alignSelf: 'center',
   },
   tab: {
