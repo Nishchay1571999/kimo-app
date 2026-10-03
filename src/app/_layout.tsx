@@ -1,8 +1,8 @@
-import { useSignupHydration, useSignupStore } from '@/features/auth/store/signup-store';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { DemoSessionProvider } from '@/context/demo-session';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useSignupHydration, useSignupStore } from '@/features/auth/store/signup-store';
 import { useOnboardingHydration, useOnboardingStore } from '@/features/onboarding/store/onboarding-store';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,18 +31,17 @@ export default function RootLayout() {
           </Stack.Protected>
           <Stack.Protected guard={completed}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="capture/index" options={{ title: 'Capture' }} />
-            <Stack.Screen name="capture/review" options={{ title: 'Review' }} />
-            <Stack.Screen name="entries/new-meal" options={{ title: 'New meal' }} />
-            <Stack.Screen name="entries/new-exercise" options={{ title: 'New exercise' }} />
-            <Stack.Screen name="entries/[entryId]" options={{ title: 'Entry' }} />
-            <Stack.Screen name="history/index" options={{ title: 'History' }} />
-            <Stack.Screen name="history/day/[date]" options={{ title: 'Day details' }} />
-            <Stack.Screen name="goals/current" options={{ title: 'Current goal' }} />
-            <Stack.Screen name="goals/edit" options={{ title: 'Edit goal' }} />
-            <Stack.Screen name="weight/new" options={{ title: 'Log weight' }} />
-            <Stack.Screen name="chat/[threadId]" options={{ title: 'Conversation' }} />
-            <Stack.Screen name="chat/new" options={{ title: 'New chat' }} />
+            <Stack.Screen name="capture/index" options={{ headerShown: false }} />
+            <Stack.Screen name="capture/review" options={{ headerShown: false }} />
+            <Stack.Screen name="entries/new-meal" options={{ headerShown: false }} />
+            <Stack.Screen name="entries/new-exercise" options={{ headerShown: false }} />
+            <Stack.Screen name="entries/[entryId]" options={{ headerShown: false }} />
+            <Stack.Screen name="history/index" options={{ headerShown: false }} />
+            <Stack.Screen name="history/day/[date]" options={{ headerShown: false }} />
+            <Stack.Screen name="goals/current" options={{ headerShown: false }} />
+            <Stack.Screen name="goals/edit" options={{ headerShown: false }} />
+            <Stack.Screen name="weight/new" options={{ headerShown: false }} />
+            <Stack.Screen name="chat" options={{ headerShown: false }} />
           </Stack.Protected>
         </Stack>}
         </SafeAreaView>
