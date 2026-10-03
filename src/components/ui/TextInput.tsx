@@ -9,7 +9,9 @@ import {
     View,
     type TextInputProps,
     type TextProps,
+    type TextStyle,
     type ViewProps,
+    type ViewStyle,
 } from "react-native";
 
 
@@ -45,7 +47,7 @@ const Input = React.forwardRef<TextInput, InputProps>(
           setFocused(false);
           onBlur?.(event);
         }}
-        style={cn(
+        style={cn<TextStyle>(
           styles.input,
           focused && styles.inputFocused,
           invalid && styles.inputInvalid,
@@ -61,31 +63,31 @@ const Input = React.forwardRef<TextInput, InputProps>(
 Input.displayName = "Input";
 
 function InputField({ style, ...props }: ViewProps) {
-  return <View style={cn(styles.field, style)} {...props} />;
+  return <View style={cn<ViewStyle>(styles.field, style)} {...props} />;
 }
 
 function InputLabel({ style, ...props }: TextProps) {
-  return <Text style={cn(styles.label, style)} {...props} />;
+  return <Text style={cn<TextStyle>(styles.label, style)} {...props} />;
 }
 
 function InputDescription({ style, ...props }: TextProps) {
-  return <Text style={cn(styles.description, style)} {...props} />;
+  return <Text style={cn<TextStyle>(styles.description, style)} {...props} />;
 }
 
 function InputError({ style, ...props }: TextProps) {
-  return <Text style={cn(styles.error, style)} {...props} />;
+  return <Text style={cn<TextStyle>(styles.error, style)} {...props} />;
 }
 
 function InputGroup({ style, ...props }: ViewProps) {
-  return <View style={cn(styles.group, style)} {...props} />;
+  return <View style={cn<ViewStyle>(styles.group, style)} {...props} />;
 }
 
 function InputPrefix({ style, ...props }: ViewProps) {
-  return <View style={cn(styles.prefix, style)} {...props} />;
+  return <View style={cn<ViewStyle>(styles.prefix, style)} {...props} />;
 }
 
 function InputSuffix({ style, ...props }: ViewProps) {
-  return <View style={cn(styles.suffix, style)} {...props} />;
+  return <View style={cn<ViewStyle>(styles.suffix, style)} {...props} />;
 }
 
 const styles = StyleSheet.create({

@@ -1,3 +1,4 @@
+import { useSignupHydration, useSignupStore } from '@/features/auth/store/signup-store';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { DemoSessionProvider } from '@/context/demo-session';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -11,6 +12,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const hydrated = useOnboardingHydration();
+  const signupHydrated = useSignupHydration();
+  const signupPending = useSignupStore((state) => state.pending);
   const completed = useOnboardingStore((state) => state.completed);
   const accessMode = useOnboardingStore((state) => state.accessMode);
   return (
@@ -18,9 +21,9 @@ export default function RootLayout() {
       <DemoSessionProvider>
         <SafeAreaView style={{ flex: 1 }} edges={['top', 'right', 'left']}>
         <AnimatedSplashOverlay />
-        {hydrated && <Stack>
+        {hydrated && signupHydrated && <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Protected guard={!completed || accessMode === 'guest'}>
+          <Stack.Protected guard={signupPending || !completed || accessMode === 'guest'}>
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           </Stack.Protected>
           <Stack.Protected guard={!completed}>
@@ -39,6 +42,7 @@ export default function RootLayout() {
             <Stack.Screen name="goals/edit" options={{ title: 'Edit goal' }} />
             <Stack.Screen name="weight/new" options={{ title: 'Log weight' }} />
             <Stack.Screen name="chat/[threadId]" options={{ title: 'Conversation' }} />
+            <Stack.Screen name="chat/new" options={{ title: 'New chat' }} />
           </Stack.Protected>
         </Stack>}
         </SafeAreaView>

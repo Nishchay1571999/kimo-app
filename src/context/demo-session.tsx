@@ -1,3 +1,5 @@
+import { signupStore } from '@/features/auth/store/signup-store';
+import { signupDestination } from '@/features/auth/store/signup-destination';
 import type { Href } from 'expo-router';
 import { onboardingStore, useOnboardingStore } from '@/features/onboarding/store/onboarding-store';
 import { createContext, useContext, useState, type ReactNode } from 'react';
@@ -19,6 +21,8 @@ const DemoSessionContext = createContext<{
 } | null>(null);
 
 export function destinationFor(session: DemoSession): Href {
+  const signup = signupDestination(signupStore.getState());
+  if (signup) return signup;
   if (onboardingStore.getState().completed) return '/(tabs)';
   if (session.mode === 'visitor') return '/(auth)/welcome';
   if (!session.onboarded) {
@@ -48,6 +52,7 @@ export function DemoSessionProvider({ children }: { children: ReactNode }) {
         setSession((current) => ({ ...current, ...changes }));
       },
       reset: () => {
+        void signupStore.getState().finish();
         onboardingStore.getState().reset();
         setSession(initialSession);
       },

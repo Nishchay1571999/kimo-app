@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import { Controller, useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -16,9 +17,9 @@ import { Button, ButtonText } from "@/components/ui/Button";
 import {
     Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/Card";
-import {
-    Input, InputError, InputField, InputLabel,
-} from "@/components/ui/TextInput";
+import { InputError } from "@/components/ui/TextInput";
+import { AuthInputField } from "@/features/auth/components/auth-input-field";
+import { signupStore, useSignupStore } from "@/features/auth/store/signup-store";
 import { destinationFor, useDemoSession } from "@/context/demo-session";
 import {
     registerSchema, type RegisterForm,
@@ -64,31 +65,55 @@ const fields: {
 export default function Screen() {
   const { session, update } = useDemoSession();
   const nav = useDemoNavigation();
+  const draft = useSignupStore((state) => state);
+  const returnTo = nav.returnTo ?? draft.returnTo;
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    subscribe,
+    formState: { isSubmitting },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { displayName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { displayName: draft.displayName, email: draft.email, password: "", confirmPassword: "" },
   });
 
+  useEffect(() => {
+    signupStore.getState().begin(nav.returnTo);
+  }, [nav.returnTo]);
+
+  useEffect(() => subscribe({
+    name: ["displayName", "email"],
+    formState: { values: true },
+    callback: ({ values }) => signupStore.getState().saveDraft({
+      displayName: values.displayName, email: values.email,
+    }),
+  }), [subscribe]);
+
   const onSubmit = async () => {
+    if (!await signupStore.getState().finish()) return;
     // Navigation scaffolding until account creation is connected to a service.
     const next = { ...session, mode: "account" as const };
     update(next);
     router.replace(
-      next.onboarded && next.hasGoal && nav.returnTo === "ai"
-        ? "/(tabs)/ai"
+      next.onboarded && next.hasGoal && returnTo === "ai"
+        ? "/chat/new"
         : destinationFor(next),
     );
   };
 
   const signIn = () => {
+    signupStore.getState().cancel();
     router.replace({
-      pathname: "/(auth)/welcome",
-      params: { returnTo: nav.returnTo },
+      pathname: "/(auth)/login",
+      params: { returnTo },
     });
+  };
+
+  const continueAsGuest = () => {
+    signupStore.getState().cancel();
+    const next = { ...session, mode: "guest" as const, step: "about-you" as const };
+    update(next);
+    router.replace(destinationFor(next));
   };
 
   return (
@@ -120,29 +145,15 @@ export default function Screen() {
                 </CardHeader>
                 <CardContent style={styles.cardContent}>
                   {fields.map(({ name, label, input }) => (
-                    <Controller
-                      key={name}
-                      control={control}
-                      name={name}
-                      render={({ field: { value, onChange, onBlur, ref } }) => (
-                        <InputField>
-                          <InputLabel>{label}</InputLabel>
-                          <Input
-                            {...input}
-                            ref={ref}
-                            value={value}
-                            onChangeText={onChange}
-                            onBlur={onBlur}
-                            invalid={!!errors[name]}
-                            autoCorrect={false}
-                            onSubmitEditing={name === "confirmPassword" ? handleSubmit(onSubmit) : undefined}
-                          />
-                          {errors[name] && <InputError>{errors[name].message}</InputError>}
-                        </InputField>
-                      )}
+                    <AuthInputField
+                      key={name} control={control} name={name} label={label} {...input}
+                      editable={!isSubmitting}
+                      onSubmitEditing={name === "confirmPassword" ? handleSubmit(onSubmit) : undefined}
                     />
                   ))}
+                  {draft.storageError && <InputError>{draft.storageError}</InputError>}
                   <Button
+                    disabled={!!draft.storageError}
                     size="lg"
                     loading={isSubmitting}
                     onPress={handleSubmit(onSubmit)}
@@ -159,6 +170,11 @@ export default function Screen() {
             <Text style={styles.bottomText}>Already have an Account ?</Text>
             <Button variant="link" onPress={signIn} disabled={isSubmitting}>
               <ButtonText>Sign In</ButtonText>
+            </Button>
+          </View>
+          <View style={styles.guestArea}>
+            <Button variant="link" onPress={continueAsGuest} disabled={isSubmitting}>
+              <ButtonText>Continue as guest</ButtonText>
             </Button>
           </View>
         </View>
@@ -247,6 +263,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
 
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  guestArea: {
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingBottom: 20,
   },

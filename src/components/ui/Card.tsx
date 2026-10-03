@@ -5,15 +5,17 @@ import {
     StyleSheet,
     Text,
     type TextProps,
+    type TextStyle,
     View,
     type ViewProps,
+    type ViewStyle,
 } from "react-native";
 
 
 function Card({ style, ...props }: ViewProps) {
   return (
     <View
-      style={cn(styles.card, style)}
+      style={cn<ViewStyle>(styles.card, style)}
       {...props}
     />
   );
@@ -22,7 +24,7 @@ function Card({ style, ...props }: ViewProps) {
 function CardHeader({ style, ...props }: ViewProps) {
   return (
     <View
-      style={cn(styles.header, style)}
+      style={cn<ViewStyle>(styles.header, style)}
       {...props}
     />
   );
@@ -31,7 +33,7 @@ function CardHeader({ style, ...props }: ViewProps) {
 function CardTitle({ style, ...props }: TextProps) {
   return (
     <Text
-      style={cn(styles.title, style)}
+      style={cn<TextStyle>(styles.title, style)}
       {...props}
     />
   );
@@ -40,7 +42,7 @@ function CardTitle({ style, ...props }: TextProps) {
 function CardDescription({ style, ...props }: TextProps) {
   return (
     <Text
-      style={cn(styles.description, style)}
+      style={cn<TextStyle>(styles.description, style)}
       {...props}
     />
   );
@@ -49,7 +51,7 @@ function CardDescription({ style, ...props }: TextProps) {
 function CardAction({ style, ...props }: ViewProps) {
   return (
     <View
-      style={cn(styles.action, style)}
+      style={cn<ViewStyle>(styles.action, style)}
       {...props}
     />
   );
@@ -58,7 +60,7 @@ function CardAction({ style, ...props }: ViewProps) {
 function CardContent({ style, ...props }: ViewProps) {
   return (
     <View
-      style={cn(styles.content, style)}
+      style={cn<ViewStyle>(styles.content, style)}
       {...props}
     />
   );
@@ -67,7 +69,7 @@ function CardContent({ style, ...props }: ViewProps) {
 function CardFooter({ style, ...props }: ViewProps) {
   return (
     <View
-      style={cn(styles.footer, style)}
+      style={cn<ViewStyle>(styles.footer, style)}
       {...props}
     />
   );
