@@ -91,8 +91,8 @@ export function ChatComposer({ value, onChangeText, models, selectedModelId, onM
 const styles = StyleSheet.create({
   composer: { width: '100%', maxWidth: 800, alignSelf: 'center', borderWidth: 1, borderRadius: 24, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 46, paddingHorizontal: 16, paddingVertical: 6 },
-  logoTile: { width: 24, height: 24, borderRadius: 6, backgroundColor: '#E0E1E6', justifyContent: 'center', alignItems: 'center' },
-  logo: { width: 22, height: 22 },
+  logoTile: { width: 24, height: 24, borderRadius: 6, backgroundColor:  '#E0E1E6', justifyContent: 'center', alignItems: 'center' },
+  logo: { width: 22, height: 22, backgroundColor:  '#E0E1E6' },
   modelName: { flex: 1, fontSize: 14, fontWeight: '500' },
   modelLabel: { fontSize: 12 },
   inputArea: { flexDirection: 'row', alignItems: 'stretch', borderTopWidth: 1, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingLeft: 16, paddingRight: 8, paddingVertical: 8 },
