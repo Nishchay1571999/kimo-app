@@ -53,7 +53,7 @@ export default function Screen() {
                 <AccordionTrigger>Your height and current weight</AccordionTrigger>
                 <AccordionContent>
                   <Text style={styles.body}>
-                    We’ll ask for height in centimeters and weight in kilograms. Height
+                    We’ll ask for height in feet and inches and weight in kilograms. Height
                     adds context to your measurements. Your current weight becomes the
                     starting point for tracking changes during the month.
                   </Text>

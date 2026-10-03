@@ -1,4 +1,5 @@
 import type { Href } from 'expo-router';
+import { onboardingStore, useOnboardingStore } from '@/features/onboarding/store/onboarding-store';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
 type DemoSession = {
@@ -18,19 +19,38 @@ const DemoSessionContext = createContext<{
 } | null>(null);
 
 export function destinationFor(session: DemoSession): Href {
+  if (onboardingStore.getState().completed) return '/(tabs)';
   if (session.mode === 'visitor') return '/(auth)/welcome';
-  if (!session.onboarded) return `/(onboarding)/${session.step}`;
+  if (!session.onboarded) {
+    const savedStep = onboardingStore.getState().step;
+    return `/(onboarding)/${savedStep === 'about-you' ? session.step : savedStep}`;
+  }
   if (!session.hasGoal) return '/goals/edit';
   return '/(tabs)';
 }
 
 export function DemoSessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState(initialSession);
+  const completed = useOnboardingStore((state) => state.completed);
+  const started = useOnboardingStore((state) => state.hasStarted);
+  const accessMode = useOnboardingStore((state) => state.accessMode);
+  const restoredSession = {
+    ...session,
+    mode: session.mode === 'visitor' && (started || completed) ? accessMode : session.mode,
+    onboarded: completed || session.onboarded,
+    hasGoal: completed || session.hasGoal,
+  };
   return (
     <DemoSessionContext.Provider value={{
-      session,
-      update: (changes) => setSession((current) => ({ ...current, ...changes })),
-      reset: () => setSession(initialSession),
+      session: restoredSession,
+      update: (changes) => {
+        if (changes.mode && changes.mode !== 'visitor') onboardingStore.getState().setAccessMode(changes.mode);
+        setSession((current) => ({ ...current, ...changes }));
+      },
+      reset: () => {
+        onboardingStore.getState().reset();
+        setSession(initialSession);
+      },
     }}>
       {children}
     </DemoSessionContext.Provider>
