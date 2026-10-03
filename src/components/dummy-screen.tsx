@@ -12,16 +12,19 @@ export type DummyAction = {
   replace?: boolean;
 };
 
-export function DummyScreen({ title, description, details = [], actions }: {
+export function DummyScreen({ title, description, details = [], actions, bottomSafeArea = true }: {
   title: string;
   description: string;
   details?: string[];
   actions: DummyAction[];
+  bottomSafeArea?: boolean;
 }) {
   const theme = useTheme();
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <SafeAreaView
+        style={styles.container}
+        edges={bottomSafeArea ? ['left', 'right', 'bottom'] : ['left', 'right']}>
         <ScrollView contentContainerStyle={styles.content}>
           <ThemedText type="small" themeColor="textSecondary">KIMO · DEMO</ThemedText>
           <ThemedText type="subtitle" accessibilityRole="header">{title}</ThemedText>

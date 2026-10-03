@@ -5,6 +5,7 @@ export default function Screen() {
   const nav = useDemoNavigation();
   return (
     <DummyScreen
+      bottomSafeArea={false}
       title="Today"
       description="Your daily summary and logged entries."
       details={[nav.date, 'Sample totals: 1,240 kcal · 30 minutes activity', 'Sample meal: rice bowl · 520 kcal']}

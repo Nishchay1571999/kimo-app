@@ -5,6 +5,7 @@ export default function Screen() {
   const { session } = useDemoSession();
   return (
     <DummyScreen
+      bottomSafeArea={false}
       title="AI assistant"
       description="Account gate or conversation list."
       details={[session.mode === 'account' ? 'Sample thread: My monthly progress' : 'Create an account or sign in to use AI.']}

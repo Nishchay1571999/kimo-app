@@ -7,6 +7,7 @@ export default function Screen() {
   const { session, reset } = useDemoSession();
   return (
     <DummyScreen
+      bottomSafeArea={false}
       title="Profile"
       description="Facts, progress, preferences, and account actions."
       details={[`Session: ${session.mode}`, 'Alex · 170 cm · 72 kg', 'Preferences: metric units · system appearance']}
