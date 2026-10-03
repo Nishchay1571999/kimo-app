@@ -1,8 +1,9 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { DemoSessionProvider } from '@/context/demo-session';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -11,6 +12,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <DemoSessionProvider>
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'right', 'left']}>
         <AnimatedSplashOverlay />
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -29,6 +31,7 @@ export default function RootLayout() {
           <Stack.Screen name="weight/new" options={{ title: 'Log weight' }} />
           <Stack.Screen name="chat/[threadId]" options={{ title: 'Conversation' }} />
         </Stack>
+        </SafeAreaView>
       </DemoSessionProvider>
     </ThemeProvider>
   );
