@@ -45,7 +45,7 @@ export function ModelPickerSheet({ visible, models, selectedModelId, onSelect, o
                     backgroundColor: selected || pressed ? theme.backgroundElement : theme.background,
                   }]}>
                   <View style={styles.logoTile}>
-                    <Image source={model.logo} style={styles.logo} contentFit="contain" />
+                    {model.logo ? <Image source={model.logo} style={styles.logo} contentFit="contain" /> : <Text>{model.name[0]}</Text>}
                   </View>
                   <Text style={[styles.modelName, { color: theme.text }]}>{model.name}</Text>
                   {selected && <Check size={20} color={theme.text} strokeWidth={2} />}

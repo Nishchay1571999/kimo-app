@@ -4,6 +4,9 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { ContributionHeatmap } from '@/features/profile/components/contribution-heatmap';
 import { ProfileCard } from '@/features/profile/components/profile-card';
+import { Button, ButtonText } from '@/components/ui/Button';
+import { signOut } from '@/features/auth/components/session-provider';
+import { useSessionStore } from '@/features/auth/store/session-store';
 import { StreakCard } from '@/features/profile/components/streak-card';
 import {
     EXERCISE_ACTIVITY,
@@ -20,6 +23,7 @@ function getPreviousMonth() {
 }
 
 export default function ProfileScreen() {
+  const account = useSessionStore((state) => state.account);
   const previousMonth = useMemo(
     () => getPreviousMonth(),
     [],
@@ -33,6 +37,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ProfileCard profile={PROFILE} />
+        {account && <Button variant="outline" onPress={() => { void signOut(); }}><ButtonText>Sign out</ButtonText></Button>}
 
         <StreakCard maxStreak={PROFILE.maxStreak} />
 

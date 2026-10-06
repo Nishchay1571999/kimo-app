@@ -1,8 +1,9 @@
 import { signupStore } from '@/features/auth/store/signup-store';
 import { signupDestination } from '@/features/auth/store/signup-destination';
 import type { Href } from 'expo-router';
-import { onboardingStore, useOnboardingStore } from '@/features/onboarding/store/onboarding-store';
+import { onboardingStore } from '@/features/onboarding/store/onboarding-store';
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { sessionStore, useSessionStore } from '@/features/auth/store/session-store';
 
 type DemoSession = {
   mode: 'visitor' | 'guest' | 'account';
@@ -13,36 +14,30 @@ type DemoSession = {
 const initialSession: DemoSession = {
   mode: 'visitor', step: 'about-you', onboarded: false, hasGoal: false,
 };
-// Navigation scaffolding only. Reloading resets demo state; storage/auth comes later.
+// Compatibility state for unfinished screens. Identity and completion come from the real session.
 const DemoSessionContext = createContext<{
   session: DemoSession;
   update: (changes: Partial<DemoSession>) => void;
   reset: () => void;
 } | null>(null);
 
-export function destinationFor(session: DemoSession): Href {
+export function destinationFor(_session: DemoSession): Href {
+  const account = sessionStore.getState().account;
+  if (account) return account.onboardingCompleted ? '/(tabs)' : '/(onboarding)/about-you';
   const signup = signupDestination(signupStore.getState());
   if (signup) return signup;
-  if (onboardingStore.getState().completed) return '/(tabs)';
-  if (session.mode === 'visitor') return '/(auth)/welcome';
-  if (!session.onboarded) {
-    const savedStep = onboardingStore.getState().step;
-    return `/(onboarding)/${savedStep === 'about-you' ? session.step : savedStep}`;
-  }
-  if (!session.hasGoal) return '/goals/edit';
-  return '/(tabs)';
+  return '/(auth)/welcome';
 }
 
 export function DemoSessionProvider({ children }: { children: ReactNode }) {
+  const account = useSessionStore((state) => state.account);
   const [session, setSession] = useState(initialSession);
-  const completed = useOnboardingStore((state) => state.completed);
-  const started = useOnboardingStore((state) => state.hasStarted);
-  const accessMode = useOnboardingStore((state) => state.accessMode);
   const restoredSession = {
     ...session,
-    mode: session.mode === 'visitor' && (started || completed) ? accessMode : session.mode,
-    onboarded: completed || session.onboarded,
-    hasGoal: completed || session.hasGoal,
+    mode: account ? account.accountStatus === 'member' ? 'account' as const : 'guest' as const
+      : 'visitor' as const,
+    onboarded: account?.onboardingCompleted ?? false,
+    hasGoal: account?.onboardingCompleted ?? false,
   };
   return (
     <DemoSessionContext.Provider value={{

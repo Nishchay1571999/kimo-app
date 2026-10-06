@@ -1,21 +1,19 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export function SleepWakeCard({
   wakeTime,
   sleepTime,
+  crossesMidnight = false,
 }: {
   wakeTime: string;
   sleepTime: string;
+  crossesMidnight?: boolean;
 }) {
   return (
     <View style={styles.sleepWakeCard}>
       <SleepWakeItem icon="☀" label="Wake up" time={wakeTime} />
       <View style={styles.sleepWakeDivider} />
-      <SleepWakeItem icon="☾" label="Sleep" time={sleepTime} />
-
-      <Pressable style={styles.editSleepButton}>
-        <Text style={styles.editSleepButtonText}>Edit</Text>
-      </Pressable>
+      <SleepWakeItem icon="☾" label={crossesMidnight ? 'Sleep · next day' : 'Sleep'} time={sleepTime} />
     </View>
   );
 }

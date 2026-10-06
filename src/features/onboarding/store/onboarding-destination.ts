@@ -2,6 +2,11 @@ import { goalSchema } from '../schema/goal-schema';
 import { lifestyleSchema } from '../schema/lifestyle-schema';
 import type { OnboardingState } from './create-onboarding-store';
 
+export function hasRemoteSuccess(state: Pick<OnboardingState, 'syncMode' | 'step' | 'completed' | 'goal' | 'lifestyle'>) {
+  return state.syncMode === 'remote' && state.step === 'target' && !state.completed
+    && goalSchema.safeParse(state.goal).success && lifestyleSchema.safeParse(state.lifestyle).success;
+}
+
 export function hasOnboardingDraft(state: OnboardingState) {
   // Also recognize drafts saved before hasStarted was introduced.
   return state.hasStarted || state.goal.age !== 18 || state.goal.feet !== ''

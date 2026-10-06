@@ -12,9 +12,10 @@ require.extensions['.ts'] = (module, filename) => {
 const { createOnboardingStore } = require('../src/features/onboarding/store/create-onboarding-store.ts');
 const { onboardingDestination } = require('../src/features/onboarding/store/onboarding-destination.ts');
 const { createOnboardingTransport } = require('../src/features/onboarding/services/onboarding-service.ts');
+const { toOnboardingRequest } = require('../src/features/onboarding/services/onboarding-payload.ts');
 
 const goal = { age: 28, gender: 'unspecified', feet: '5', inches: '', weight: '72.5', intention: 'maintain' };
-const lifestyle = { healthyEating: 'most-of-the-time', exerciseFrequency: 'once-or-twice' };
+const lifestyle = { wakeTime: '07:00', sleepTime: '23:00', healthyEating: 'most-of-the-time', exerciseFrequency: 'once-or-twice' };
 function memoryStorage() {
   const data = new Map();
   return { data, getItem: (key) => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: (key) => data.delete(key) };
@@ -25,6 +26,14 @@ async function ready(storage, transport = createOnboardingTransport()) {
   return store;
 }
 async function main() {
+  const requestPayload = toOnboardingRequest({ goal, lifestyle: { ...lifestyle, sleepTime: '00:30' } });
+  assert.equal(requestPayload.heightCm, 152.4);
+  assert.equal(requestPayload.weightKg, 72.5);
+  assert.equal(requestPayload.exerciseFrequency, 'once_or_twice');
+  assert.equal(requestPayload.healthyEatingFrequency, 'most_of_the_time');
+  assert.equal(requestPayload.sleepTime, '00:30');
+  assert.throws(() => toOnboardingRequest({ goal, lifestyle: { ...lifestyle, wakeTime: '24:00' } }));
+  assert.throws(() => toOnboardingRequest({ goal, lifestyle: { ...lifestyle, sleepTime: lifestyle.wakeTime } }));
   const disk = memoryStorage();
   let posts = 0;
   let release;
@@ -122,18 +131,20 @@ async function main() {
   legacyDisk.setItem('kimo-onboarding', JSON.stringify({ version: 1, state: { goal, lifestyle: {}, step: 'lifestyle', syncMode: 'local' } }));
   assert.equal(onboardingDestination((await ready(legacyDisk)).getState()), '/(onboarding)/lifestyle');
 
-  const originalFetch = global.fetch;
-  try {
-    let request;
-    global.fetch = async (url, options) => { request = { url, ...options }; return { ok: true }; };
-    const post = createOnboardingTransport('https://example.test/onboarding', async () => 'test-token');
-    assert.equal(await post({ goal, lifestyle }), 'remote');
-    assert.equal(request.method, 'POST');
-    assert.equal(request.headers.Authorization, 'Bearer test-token');
-    assert.deepEqual(JSON.parse(request.body), { goal, lifestyle });
-    global.fetch = async () => ({ ok: false });
-    await assert.rejects(post({ goal, lifestyle }));
-  } finally { global.fetch = originalFetch; }
+  const { AxiosError } = require('axios');
+  let request;
+  let fail = false;
+  const post = createOnboardingTransport('https://example.test/onboarding', async () => 'test-token', async config => {
+    request = config;
+    if (fail) throw new AxiosError('failed', 'ERR_NETWORK', config);
+    return { status: 200, data: {}, headers: {}, config, statusText: 'OK' };
+  });
+  assert.equal(await post({ goal, lifestyle }), 'remote');
+  assert.equal(request.method, 'post');
+  assert.equal(request.headers.Authorization, 'Bearer test-token');
+  assert.deepEqual(JSON.parse(request.data), { goal, lifestyle });
+  fail = true;
+  await assert.rejects(post({ goal, lifestyle }));
   console.log('Onboarding checks passed: validation, persistence, hydration, POST, retry, duplicate protection, storage failures, and reset.');
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });

@@ -5,12 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ButtonText } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
-import { InputError, InputField } from '@/components/ui/TextInput';
-import type { LifestyleForm } from '@/features/onboarding/schema/lifestyle-schema';
+import { Input, InputLabel, InputError, InputField } from '@/components/ui/TextInput';
 import { useLifestyleForm } from '@/features/onboarding/hooks/use-lifestyle-form';
 
 const questions: {
-  name: keyof LifestyleForm;
+  name: 'healthyEating' | 'exerciseFrequency';
   title: string;
   description: string;
   options: { value: string; label: string; description: string }[];
@@ -65,7 +64,7 @@ export default function Screen() {
           <Text style={styles.step}>Step 3 of 4</Text>
           <Text style={styles.title}>Your everyday rhythm</Text>
           <Text style={styles.description}>
-            Two quick questions about life as it is. We’re getting to know your routine, not grading it.
+            Tell us about your habits and usual wake and sleep times.
           </Text>
         </View>
 
@@ -98,15 +97,33 @@ export default function Screen() {
           </Card>
         ))}
 
+        <Card>
+          <CardHeader>
+            <CardTitle style={styles.cardTitle}>Your daily schedule</CardTitle>
+            <CardDescription>Use 24-hour times in your account’s timezone. These times are fixed after setup.</CardDescription>
+          </CardHeader>
+          <CardContent style={{ gap: 16 }}>
+            {(['wakeTime', 'sleepTime'] as const).map((name) => <Controller key={name} control={control} name={name}
+              render={({ field: { value, onChange, onBlur } }) => <InputField>
+                <InputLabel>{name === 'wakeTime' ? 'Wake time' : 'Sleep time'}</InputLabel>
+                <Input value={value ?? ''} onChangeText={onChange} onBlur={onBlur}
+                  placeholder={name === 'wakeTime' ? '07:00' : '23:00'} maxLength={5}
+                  autoCapitalize="none" editable={!loading} invalid={!!errors[name]}
+                  accessibilityLabel={name === 'wakeTime' ? 'Wake time in 24-hour format' : 'Sleep time in 24-hour format'} />
+                {errors[name] && <InputError>{errors[name].message}</InputError>}
+              </InputField>} />)}
+          </CardContent>
+        </Card>
+
         <Text style={styles.note}>
           Choose what fits you today. Small changes still deserve a spot on the calendar.
         </Text>
         <View style={styles.footer}>
             {error && <InputError>{error}</InputError>}
-          <Button size="lg" loading={loading} onPress={onSubmit}>
+          <Button size="lg" loading={loading} disabled={loading} onPress={onSubmit}>
             <ButtonText>Continue</ButtonText>
           </Button>
-          <Text style={styles.nextStep}>Next: review your monthly target</Text>
+          <Text style={styles.nextStep}>Next: finish setup</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

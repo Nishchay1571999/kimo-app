@@ -3,40 +3,48 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/hooks/use-theme';
-import { localChatModels } from '../models';
 import { ChatComposer, type ChatComposerProps } from './chat-composer';
 
 type ChatScreenProps = {
   children?: ReactNode;
-  models?: ChatComposerProps['models'];
+  models: ChatComposerProps['models'];
+  value: string;
+  onChangeText: (value: string) => void;
+  selectedModelId: string;
+  onModelChange: ChatComposerProps['onModelChange'];
+  disabled?: boolean;
   isResponding?: boolean;
   onSend?: ChatComposerProps['onSend'];
   onStop?: ChatComposerProps['onStop'];
   onAttach?: ChatComposerProps['onAttach'];
 };
 
-// UI shell only: supply send, stop, and attachment handlers when chat is connected.
-export function ChatScreen({ children, models = localChatModels, isResponding, onSend, onStop, onAttach }: ChatScreenProps) {
+export function ChatScreen({ children, models, value, onChangeText, selectedModelId, onModelChange, disabled, isResponding, onSend, onStop, onAttach }: ChatScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const container = useRef<View>(null);
+  const conversation = useRef<ScrollView>(null);
+  const followLatest = useRef(true);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
-  const [draft, setDraft] = useState('');
-  const [selectedModelId, setSelectedModelId] = useState(models[0]?.id ?? '');
 
   return (
     <View ref={container} collapsable={false} style={[styles.screen, { backgroundColor: theme.background }]}
       onLayout={() => container.current?.measureInWindow((_x, y) => setKeyboardOffset(y))}>
       <KeyboardAvoidingView style={styles.screen} keyboardVerticalOffset={keyboardOffset}
         behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}>
-        <ScrollView style={styles.conversation} contentContainerStyle={styles.messages}
+        <ScrollView ref={conversation} style={styles.conversation} contentContainerStyle={styles.messages}
+          onContentSizeChange={() => { if (followLatest.current) conversation.current?.scrollToEnd({ animated: false }); }}
+          onScroll={event => {
+            const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+            followLatest.current = contentSize.height - contentOffset.y - layoutMeasurement.height < 80;
+          }} scrollEventThrottle={100}
           keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}>
           {children}
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <ChatComposer value={draft} onChangeText={setDraft} models={models}
+          <ChatComposer value={value} onChangeText={onChangeText} models={models} disabled={disabled}
             isResponding={isResponding} onSend={onSend} onStop={onStop} onAttach={onAttach}
-            selectedModelId={selectedModelId} onModelChange={(model) => setSelectedModelId(model.id)} />
+            selectedModelId={selectedModelId} onModelChange={onModelChange} />
         </View>
       </KeyboardAvoidingView>
     </View>

@@ -1,8 +1,8 @@
 import { Plus } from "lucide-react-native";
 import { Pressable, StyleSheet } from 'react-native';
-export function AddEntryButton() {
+export function AddEntryButton({ onPress }: { onPress: () => void }) {
   return (
-    <Pressable style={styles.addButton}>
+    <Pressable style={styles.addButton} onPress={onPress} accessibilityRole="button" accessibilityLabel="Add an entry">
       <Plus color="#FFFFFF" size={39} />
     </Pressable>
   );

@@ -1,16 +1,15 @@
 import { router } from 'expo-router';
 
-import { destinationFor, useDemoSession } from '@/context/demo-session';
-import { signupStore } from '@/features/auth/store/signup-store';
+import { useAuthentication } from './use-authentication';
+import type { LoginForm } from '../schema/login-schema';
 
 export function useSignIn(returnTo?: string, onSuccess?: () => void) {
-  const { session, update } = useDemoSession();
-  return async () => {
-    // Navigation scaffolding until authentication is connected to a service.
-    const next = { ...session, mode: 'account' as const };
-    if (!await signupStore.getState().finish()) return;
-    update(next);
-    onSuccess?.();
-    router.replace(next.onboarded && next.hasGoal && returnTo === 'ai' ? '/chat/new' : destinationFor(next));
+  const { signIn } = useAuthentication();
+  return async (values: LoginForm) => {
+    try {
+      const account = await signIn.mutateAsync(values);
+      onSuccess?.();
+      router.replace(account.onboardingCompleted ? returnTo === 'ai' ? '/chat/new' : '/(tabs)' : '/(onboarding)/about-you');
+    } finally { signIn.reset(); }
   };
 }

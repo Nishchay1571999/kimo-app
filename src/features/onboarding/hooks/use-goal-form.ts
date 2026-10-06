@@ -1,25 +1,20 @@
 import { useCallback, useEffect } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useDemoSession } from '@/context/demo-session';
-import type { GoalForm } from '../schema/goal-schema';
+import { goalSchema, type GoalForm } from '../schema/goal-schema';
 import { onboardingStore, useOnboardingHydration, useOnboardingStore } from '../store/onboarding-store';
 
 export function useGoalForm() {
   const hydrated = useOnboardingHydration();
   const { update } = useDemoSession();
-  const errors = useOnboardingStore((state) => state.goalErrors);
   const storageError = useOnboardingStore((state) => state.storageError);
   const submitting = useOnboardingStore((state) => state.submitting);
   const form = useForm<GoalForm>({
     defaultValues: onboardingStore.getState().goal,
-    resolver: (values) => {
-      const result = onboardingStore.getState().validateGoal(values);
-      return result.success
-        ? { values: result.data, errors: {} }
-        : { values: {}, errors: onboardingStore.getState().goalErrors };
-    },
+    resolver: zodResolver(goalSchema),
   });
   const { reset, subscribe } = form;
   useEffect(() => {
@@ -41,5 +36,5 @@ export function useGoalForm() {
     router.push('/(onboarding)/lifestyle');
   });
 
-  return { control: form.control, errors, onSubmit, error: storageError, loading: !hydrated || submitting };
+  return { control: form.control, errors: form.formState.errors, onSubmit, error: storageError, loading: !hydrated || submitting };
 }

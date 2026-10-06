@@ -5,14 +5,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ButtonText } from '@/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { InputError } from '@/components/ui/TextInput';
-import { destinationFor, useDemoSession } from '@/context/demo-session';
+import { useContinueAsGuest } from '../hooks/use-continue-as-guest';
 import { useSignIn } from '@/features/auth/hooks/use-sign-in';
 import { signupStore, useSignupStore } from '@/features/auth/store/signup-store';
 import { useDemoNavigation } from '@/hooks/use-demo-navigation';
 import { SignInForm } from './sign-in-form';
 
 export function SignInScreen({ allowGuest = false }: { allowGuest?: boolean }) {
-  const { session, update } = useDemoSession();
+  const guest = useContinueAsGuest();
   const nav = useDemoNavigation();
   const signIn = useSignIn(nav.returnTo);
   const storageError = useSignupStore((state) => state.storageError);
@@ -32,7 +32,7 @@ export function SignInScreen({ allowGuest = false }: { allowGuest?: boolean }) {
             </CardHeader>
             <CardContent>
               {storageError && <InputError>{storageError}</InputError>}
-              <SignInForm onSubmit={signIn} onCreateAccount={() => {
+              <SignInForm disabled={guest.busy} onSubmit={signIn} onCreateAccount={() => {
                 signupStore.getState().begin(nav.returnTo ?? 'home');
                 router.push({ pathname: '/(auth)/register', params: { returnTo: nav.returnTo } });
               }} />
@@ -40,12 +40,8 @@ export function SignInScreen({ allowGuest = false }: { allowGuest?: boolean }) {
           </Card>
         </ScrollView>
         {allowGuest && <View style={styles.bottomArea}>
-          <Button variant="link" onPress={() => {
-            signupStore.getState().cancel();
-            const next = { ...session, mode: 'guest' as const, step: 'about-you' as const };
-            update(next);
-            router.replace(destinationFor(next));
-          }}>
+          {guest.error && <InputError>{guest.error}</InputError>}
+          <Button variant="link" loading={guest.loading} disabled={guest.busy} onPress={guest.continueAsGuest}>
             <ButtonText>Continue as guest</ButtonText>
           </Button>
         </View>}

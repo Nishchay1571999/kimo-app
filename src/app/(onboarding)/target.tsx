@@ -9,6 +9,7 @@ import { InputError } from '@/components/ui/TextInput';
 import { useDemoSession } from '@/context/demo-session';
 import { onboardingDestination } from '@/features/onboarding/store/onboarding-destination';
 import { onboardingStore, useOnboardingHydration, useOnboardingStore } from '@/features/onboarding/store/onboarding-store';
+import { useSessionStore } from '@/features/auth/store/session-store';
 
 function SuccessCheck() {
   const progress = useSharedValue(0);
@@ -27,22 +28,24 @@ function SuccessCheck() {
 }
 
 export default function Screen() {
+  const account = useSessionStore((state) => state.account);
   const hydrated = useOnboardingHydration();
   const state = useOnboardingStore((state) => state);
   const { update } = useDemoSession();
   const destination = onboardingDestination(state);
 
   useFocusEffect(useCallback(() => {
-    if (!hydrated || state.storageError || destination !== '/(onboarding)/target') return;
+    if (!hydrated || state.storageError || destination !== '/(onboarding)/target' || (account && !account.onboardingCompleted)) return;
     const timer = setTimeout(() => {
       if (!onboardingStore.getState().complete()) return;
       update({ onboarded: true, hasGoal: true });
       router.replace('/(tabs)');
     }, 4500);
     return () => clearTimeout(timer);
-  }, [hydrated, state.storageError, destination, update]));
+  }, [hydrated, state.storageError, destination, update, account]));
 
   if (!hydrated) return null;
+  if (account && !account.onboardingCompleted) return <Redirect href="/(onboarding)/lifestyle" />;
   if (!state.storageError && destination !== '/(onboarding)/target') return <Redirect href={destination} />;
 
   return (

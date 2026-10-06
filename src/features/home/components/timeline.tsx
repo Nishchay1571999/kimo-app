@@ -1,32 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import type { TimelineEntryData } from '../types';
+import type { TimelineEntryData, TimelineItemData } from '../types';
 import { EntryCard } from './entry-card';
 
-export function Timeline({
-  startTime,
-  endTime,
-  entries,
-}: {
-  startTime: string;
-  endTime: string;
-  entries: readonly TimelineEntryData[];
-}) {
+export function Timeline({ items, onOpenEntry }: { items: readonly TimelineItemData[]; onOpenEntry: (entryId: string) => void }) {
   return (
     <View style={styles.timeline}>
-      <TimelineBoundary label={startTime} />
-
-      {entries.map(entry => (
-        <TimelineEntry
-          key={entry.id}
-          entry={entry}
-        />
-      ))}
-
-      <TimelineBoundary
-        label={endTime}
-        bottom
-      />
+      {items.map((item, index) => item.kind === 'entry'
+        ? <TimelineEntry key={item.id} entry={item.entry} onPress={() => onOpenEntry(item.entry.id)} />
+        : <TimelineBoundary key={item.id} label={`${item.time}${item.eventDate ? `\n${item.eventDate}` : ''}`}
+          description={item.label} bottom={index === items.length - 1} />)}
     </View>
   );
 }
@@ -34,9 +17,11 @@ export function Timeline({
 function TimelineBoundary({
   label,
   bottom,
+  description,
 }: {
   label: string;
   bottom?: boolean;
+  description: string;
 }) {
   return (
     <View
@@ -50,6 +35,7 @@ function TimelineBoundary({
       </View>
 
       <View style={styles.boundaryContent}>
+        <Text style={{ marginLeft: 14, color: '#777983', fontSize: 12 }}>{description}</Text>
         <View style={styles.boundaryDot} />
         <View style={styles.boundaryLine} />
       </View>
@@ -59,13 +45,16 @@ function TimelineBoundary({
 
 function TimelineEntry({
   entry,
+  onPress,
 }: {
   entry: TimelineEntryData;
+  onPress: () => void;
 }) {
   return (
     <View style={styles.timelineEntry}>
       <View style={styles.timeColumn}>
         <Text style={styles.timelineTime}>{entry.time}</Text>
+        {entry.eventDate && <Text style={{ fontSize: 10, color: '#777983', textAlign: 'right' }}>{entry.eventDate}</Text>}
       </View>
 
       <View style={styles.timelineRail}>
@@ -82,7 +71,7 @@ function TimelineEntry({
       </View>
 
       <View style={styles.entryContent}>
-        <EntryCard entry={entry} />
+        <EntryCard entry={entry} onPress={onPress} />
       </View>
     </View>
   );
@@ -132,7 +121,7 @@ const styles = StyleSheet.create({
 
   boundaryLine: {
     position: 'absolute',
-    top: 9,
+    top: 26,
     left: 0,
     right: 0,
     height: 1,

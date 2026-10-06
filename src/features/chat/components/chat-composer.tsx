@@ -14,6 +14,7 @@ export type ChatComposerProps = {
   selectedModelId: string;
   onModelChange: (model: ChatModel) => void;
   isResponding?: boolean;
+  disabled?: boolean;
   onSend?: (text: string, model: ChatModel) => void;
   onStop?: () => void;
   onAttach?: () => void;
@@ -25,25 +26,25 @@ const MIN_HEIGHT = LINE_HEIGHT * 2 + INPUT_PADDING * 2;
 const MAX_HEIGHT = LINE_HEIGHT * 3 + INPUT_PADDING * 2;
 
 export function ChatComposer({ value, onChangeText, models, selectedModelId, onModelChange,
-  isResponding = false, onSend, onStop, onAttach }: ChatComposerProps) {
+  isResponding = false, disabled: blocked = false, onSend, onStop, onAttach }: ChatComposerProps) {
   const theme = useTheme();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [contentHeight, setContentHeight] = useState(MIN_HEIGHT);
   const selectedModel = models.find((model) => model.id === selectedModelId) ?? models[0];
-  const canSend = value.trim().length > 0 && !!selectedModel;
-  const disabled = !isResponding && !canSend;
+  const canSend = !blocked && value.trim().length > 0 && value.trim().length <= 8000 && !!selectedModel && !!onSend;
+  const disabled = isResponding ? !onStop : !canSend;
   const inputHeight = value ? Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, contentHeight)) : MIN_HEIGHT;
 
   return (
     <>
       <View style={[styles.composer, { backgroundColor: theme.backgroundElement, borderColor: theme.backgroundSelected }]}>
-        <Pressable disabled={!models.length} accessibilityRole="button"
+        <Pressable disabled={!models.length || blocked || isResponding} accessibilityRole="button"
           accessibilityLabel={`Change model, current model ${selectedModel?.name ?? 'none'}`}
-          accessibilityState={{ expanded: pickerOpen, disabled: !models.length }}
+          accessibilityState={{ expanded: pickerOpen, disabled: !models.length || blocked || isResponding }}
           onPress={() => { Keyboard.dismiss(); setPickerOpen(true); }}
           style={({ pressed }) => [styles.header, { opacity: pressed ? 0.6 : 1 }]}>
           {selectedModel && <View style={styles.logoTile}>
-            <Image source={selectedModel.logo} style={styles.logo} contentFit="contain" />
+            {selectedModel.logo ? <Image source={selectedModel.logo} style={styles.logo} contentFit="contain" /> : <Text>{selectedModel.name[0]}</Text>}
           </View>}
           <Text style={[styles.modelName, { color: theme.text }]} numberOfLines={1}>
             {selectedModel?.name ?? 'Choose a model'}
@@ -52,7 +53,7 @@ export function ChatComposer({ value, onChangeText, models, selectedModelId, onM
           <ChevronDown size={16} color={theme.textSecondary} strokeWidth={1.75} />
         </Pressable>
         <View style={[styles.inputArea, { backgroundColor: theme.background, borderColor: theme.backgroundSelected }]}>
-          <TextInput value={value} onChangeText={onChangeText} multiline
+          <TextInput value={value} onChangeText={onChangeText} multiline maxLength={8000} editable={!isResponding}
             accessibilityLabel="Message AI" placeholder="Message AI…" placeholderTextColor={theme.textSecondary}
             textAlignVertical="top" underlineColorAndroid="transparent"
             onContentSizeChange={(event) => setContentHeight(event.nativeEvent.contentSize.height)}
@@ -60,10 +61,10 @@ export function ChatComposer({ value, onChangeText, models, selectedModelId, onM
             style={[styles.input, { color: theme.text, height: inputHeight },
               Platform.OS === 'web' && styles.webInput]} />
           <View style={styles.actions}>
-            <Pressable onPress={onAttach} style={({ pressed }) => [styles.attachment, { opacity: pressed ? 0.5 : 1 }]}
+            {onAttach && <Pressable onPress={onAttach} style={({ pressed }) => [styles.attachment, { opacity: pressed ? 0.5 : 1 }]}
               accessibilityRole="button" accessibilityLabel="Attach files">
               <Paperclip size={21} color={theme.textSecondary} strokeWidth={1.75} />
-            </Pressable>
+            </Pressable>}
             <Pressable disabled={disabled} hitSlop={4} accessibilityRole="button"
               accessibilityLabel={isResponding ? 'Stop response' : 'Send message'}
               accessibilityState={{ disabled }}

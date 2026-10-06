@@ -3,7 +3,7 @@ import { createStore } from 'zustand/vanilla';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 
 import { goalSchema, type GoalForm } from '../schema/goal-schema';
-import { lifestyleSchema, type LifestyleForm } from '../schema/lifestyle-schema';
+import { lifestyleSchema, lifestyleDraftSchema, type LifestyleForm } from '../schema/lifestyle-schema';
 import type { OnboardingTransport } from '../services/onboarding-service';
 
 export type GoalDraft = Omit<GoalForm, 'gender' | 'intention'> & Partial<Pick<GoalForm, 'gender' | 'intention'>>;
@@ -16,7 +16,7 @@ const persistedSchema = z.object({
     age: z.number(), feet: z.string(), inches: z.string(), weight: z.string(),
     gender: goalSchema.shape.gender.optional(), intention: goalSchema.shape.intention.optional(),
   }),
-  lifestyle: lifestyleSchema.partial(),
+  lifestyle: lifestyleDraftSchema,
   step: z.enum(['about-you', 'goal', 'lifestyle', 'target']),
   syncMode: z.enum(['local', 'remote']),
   hasStarted: z.boolean().default(false),
@@ -63,7 +63,7 @@ export type OnboardingState = {
   validateGoal: (draft: unknown) => ReturnType<typeof goalSchema.safeParse>;
   validateLifestyle: (draft: unknown) => ReturnType<typeof lifestyleSchema.safeParse>;
   saveGoal: () => boolean;
-  submitLifestyle: () => Promise<boolean>;
+  submitLifestyle: (transport?: OnboardingTransport) => Promise<boolean>;
   finishHydration: (error?: unknown) => void;
   reset: () => void;
   visitStep: (step: Step) => void;
@@ -128,7 +128,7 @@ export function createOnboardingStore(storage: StateStorage, post: OnboardingTra
         return false;
       }
     },
-    submitLifestyle: async () => {
+    submitLifestyle: async (transport = post) => {
       if (!get().hydrated || get().submitting || get().storageError || get().completed) return false;
       const goal = get().validateGoal(get().goal);
       const lifestyle = get().validateLifestyle(get().lifestyle);
@@ -140,7 +140,7 @@ export function createOnboardingStore(storage: StateStorage, post: OnboardingTra
       const previousStep = get().step;
       try {
         set({ goal: goal.data, lifestyle: lifestyle.data, submitting: true, submitError: null });
-        const syncMode = await post({ goal: goal.data, lifestyle: lifestyle.data });
+        const syncMode = await transport({ goal: goal.data, lifestyle: lifestyle.data });
         if (request !== requestGeneration) return false;
         set({ step: 'target', syncMode, submitting: false });
         return true;

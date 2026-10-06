@@ -1,21 +1,18 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { TimelineEntryData } from '../types';
+import { AnalysisSummary } from '../../entries/components/analysis-summary';
 
 export function EntryCard({
   entry,
+  onPress,
 }: {
   entry: TimelineEntryData;
+  onPress: () => void;
 }) {
-  if (entry.type === 'image') {
-    return <ImageEntryCard entry={entry} />;
-  }
-
-  if (entry.type === 'audio') {
-    return <AudioEntryCard entry={entry} />;
-  }
-
-  return <TextEntryCard entry={entry} />;
+  const content = entry.type === 'image' ? <ImageEntryCard entry={entry} />
+    : entry.type === 'audio' ? <AudioEntryCard entry={entry} /> : <TextEntryCard entry={entry} />;
+  return <Pressable accessibilityRole="button" accessibilityLabel={`Open ${entry.title}`} onPress={onPress}>{content}{entry.outsideSchedule && <Text style={{ fontSize: 11, color: '#777983', marginTop: 5 }}>Outside your usual schedule</Text>}</Pressable>;
 }
 
 function ImageEntryCard({
@@ -24,7 +21,7 @@ function ImageEntryCard({
   entry: TimelineEntryData;
 }) {
   return (
-    <Pressable style={[styles.noticeCard, styles.imageCard]}>
+    <View style={[styles.noticeCard, styles.imageCard]}>
       <View style={styles.pin} />
 
       <Image
@@ -40,8 +37,9 @@ function ImageEntryCard({
         </Text>
 
         <EntryDescription description={entry.description} numberOfLines={2} />
+        <AnalysisSummary ai={entry.ai} compact />
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -51,7 +49,7 @@ function AudioEntryCard({
   entry: TimelineEntryData;
 }) {
   return (
-    <Pressable style={[styles.noticeCard, styles.audioCard]}>
+    <View style={[styles.noticeCard, styles.audioCard]}>
       <View style={styles.pin} />
 
       <EntryTypeTag label="Voice note" />
@@ -60,20 +58,11 @@ function AudioEntryCard({
         {entry.title}
       </Text>
 
-      <View style={styles.audioPlayer}>
-        <View style={styles.playButton}>
-          <Text style={styles.playIcon}>▶</Text>
-        </View>
-
-        <AudioWave />
-
-        <Text style={styles.audioDuration}>
-          {entry.duration}
-        </Text>
-      </View>
+      <Text style={styles.audioDuration}>Audio attachment{entry.duration ? ` · ${entry.duration}` : ''}</Text>
 
       <EntryDescription description={entry.description} numberOfLines={2} />
-    </Pressable>
+      <AnalysisSummary ai={entry.ai} compact />
+    </View>
   );
 }
 
@@ -83,17 +72,18 @@ function TextEntryCard({
   entry: TimelineEntryData;
 }) {
   return (
-    <Pressable style={[styles.noticeCard, styles.textCard]}>
+    <View style={[styles.noticeCard, styles.textCard]}>
       <View style={styles.pin} />
 
-      <EntryTypeTag label="Note" />
+      <EntryTypeTag label={entry.category === 'nutrition' ? 'Meal' : entry.category === 'exercise' ? 'Exercise' : 'Note'} />
 
       <Text style={styles.entryTitle}>
         {entry.title}
       </Text>
 
       <EntryDescription description={entry.description} />
-    </Pressable>
+      <AnalysisSummary ai={entry.ai} compact />
+    </View>
   );
 }
 
@@ -121,27 +111,6 @@ function EntryTypeTag({
   return (
     <View style={styles.tag}>
       <Text style={styles.tagText}>{label}</Text>
-    </View>
-  );
-}
-
-const waveformHeights = [
-    8, 14, 20, 10, 24, 16, 28, 12, 21, 15, 25, 11,
-    18, 24, 14, 19, 8,
-];
-
-function AudioWave() {
-  return (
-    <View style={styles.audioWave}>
-      {waveformHeights.map((height, index) => (
-        <View
-          key={index}
-          style={[
-            styles.audioBar,
-            { height },
-          ]}
-        />
-      ))}
     </View>
   );
 }

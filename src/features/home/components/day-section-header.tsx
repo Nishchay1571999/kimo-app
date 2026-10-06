@@ -3,9 +3,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 export function DaySectionHeader({
   title,
   eyebrow,
+  onHistory,
 }: {
   title: string;
   eyebrow: string;
+  onHistory?: () => void;
 }) {
   return (
     <View style={styles.sectionHeader}>
@@ -14,9 +16,9 @@ export function DaySectionHeader({
         <Text style={styles.sectionTitle}>{title}</Text>
       </View>
 
-      <Pressable style={styles.historyButton}>
+      {onHistory && <Pressable style={styles.historyButton} onPress={onHistory} accessibilityRole="button">
         <Text style={styles.historyButtonText}>History</Text>
-      </Pressable>
+      </Pressable>}
     </View>
   );
 }

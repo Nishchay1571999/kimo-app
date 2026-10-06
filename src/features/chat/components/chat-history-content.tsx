@@ -1,22 +1,16 @@
 import { router } from 'expo-router';
 import { DrawerContentScrollView, DrawerItem, type DrawerContentComponentProps } from 'expo-router/drawer';
 import { MessageSquare, SquarePen } from 'lucide-react-native';
-import { StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
-
-// Use the existing demo thread until saved conversations are available.
-const threads = [
-  { id: 'demo-thread-1' },
-  { id: 'demo-thread-2' },
-  { id: 'demo-thread-3' },
-  { id: 'demo-thread-4' },
-  { id: 'demo-thread-5' },
-];
+import { useThreads } from '../hooks';
 
 export function ChatHistoryContent(props: DrawerContentComponentProps) {
   const theme = useTheme();
+  const history = useThreads();
+  const threads = [...new Map(history.data?.pages.flat().map(thread => [thread.id, thread])).values()];
   const activeRoute = props.state.routes[props.state.index];
   const activeThreadId = activeRoute.name === '[threadId]' && activeRoute.params && 'threadId' in activeRoute.params
     ? activeRoute.params.threadId
@@ -42,12 +36,16 @@ export function ChatHistoryContent(props: DrawerContentComponentProps) {
       <ThemedText themeColor="textSecondary" accessibilityRole="header" style={styles.historyHeading}>
         History
       </ThemedText>
-      {threads.map((thread, index) => (
+      {history.isPending && <ActivityIndicator accessibilityLabel="Loading chat history" />}
+      {history.isError && <ThemedText accessibilityRole="alert">{history.error.message}</ThemedText>}
+      <DrawerItem label="Refresh history" onPress={() => { void history.refetch(); }} />
+      {!history.isPending && !history.isError && !threads.length && <ThemedText themeColor="textSecondary" style={styles.historyHeading}>No conversations yet.</ThemedText>}
+      {threads.map((thread) => (
         <DrawerItem
           key={thread.id}
-          label={String(index + 1)}
+          label={`${thread.title ?? 'Untitled conversation'}${thread.threadStatus === 'archived' ? ' · Archived' : ''}`}
           icon={() => <MessageSquare size={20} strokeWidth={1.5} color={theme.textSecondary} />}
-          accessibilityLabel={`Open thread ${index + 1}`}
+          accessibilityLabel={`Open ${thread.title ?? 'Untitled conversation'}`}
           focused={activeThreadId === thread.id}
           activeTintColor={theme.text}
           inactiveTintColor={theme.text}
@@ -60,6 +58,7 @@ export function ChatHistoryContent(props: DrawerContentComponentProps) {
           }}
         />
       ))}
+      {history.hasNextPage && <DrawerItem label={history.isFetchingNextPage ? 'Loading…' : 'Load more conversations'} onPress={() => { if (!history.isFetchingNextPage) void history.fetchNextPage(); }} />}
     </DrawerContentScrollView>
   );
 }

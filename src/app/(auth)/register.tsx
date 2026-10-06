@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import {
     KeyboardAvoidingView,
@@ -20,11 +20,12 @@ import {
 import { InputError } from "@/components/ui/TextInput";
 import { AuthInputField } from "@/features/auth/components/auth-input-field";
 import { signupStore, useSignupStore } from "@/features/auth/store/signup-store";
-import { destinationFor, useDemoSession } from "@/context/demo-session";
+import { useContinueAsGuest } from '@/features/auth/hooks/use-continue-as-guest';
 import {
     registerSchema, type RegisterForm,
 } from "@/features/auth/schema/register-schema";
 import { useDemoNavigation } from "@/hooks/use-demo-navigation";
+import { useAuthentication } from '@/features/auth/hooks/use-authentication';
 
 const fields: {
   name: keyof RegisterForm;
@@ -48,7 +49,7 @@ const fields: {
     name: "password",
     label: "Password",
     input: {
-      placeholder: "At least 6 characters", secureTextEntry: true,
+      placeholder: "At least 7 characters", secureTextEntry: true,
       autoCapitalize: "none", autoComplete: "new-password",
     },
   },
@@ -63,7 +64,9 @@ const fields: {
 ];
 
 export default function Screen() {
-  const { session, update } = useDemoSession();
+  const guest = useContinueAsGuest();
+  const { register } = useAuthentication();
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const nav = useDemoNavigation();
   const draft = useSignupStore((state) => state);
   const returnTo = nav.returnTo ?? draft.returnTo;
@@ -89,16 +92,15 @@ export default function Screen() {
     }),
   }), [subscribe]);
 
-  const onSubmit = async () => {
-    if (!await signupStore.getState().finish()) return;
-    // Navigation scaffolding until account creation is connected to a service.
-    const next = { ...session, mode: "account" as const };
-    update(next);
-    router.replace(
-      next.onboarded && next.hasGoal && returnTo === "ai"
-        ? "/chat/new"
-        : destinationFor(next),
-    );
+  const onSubmit = async (values: RegisterForm) => {
+    if (guest.busy) return;
+    setSubmitError(null);
+    try {
+      const account = await register.mutateAsync(values);
+      router.replace(account.onboardingCompleted ? returnTo === 'ai' ? '/chat/new' : '/(tabs)' : '/(onboarding)/about-you');
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Could not create your account. Try again.');
+    } finally { register.reset(); }
   };
 
   const signIn = () => {
@@ -107,13 +109,6 @@ export default function Screen() {
       pathname: "/(auth)/login",
       params: { returnTo },
     });
-  };
-
-  const continueAsGuest = () => {
-    signupStore.getState().cancel();
-    const next = { ...session, mode: "guest" as const, step: "about-you" as const };
-    update(next);
-    router.replace(destinationFor(next));
   };
 
   return (
@@ -147,13 +142,14 @@ export default function Screen() {
                   {fields.map(({ name, label, input }) => (
                     <AuthInputField
                       key={name} control={control} name={name} label={label} {...input}
-                      editable={!isSubmitting}
+                      editable={!isSubmitting && !guest.busy}
                       onSubmitEditing={name === "confirmPassword" ? handleSubmit(onSubmit) : undefined}
                     />
                   ))}
                   {draft.storageError && <InputError>{draft.storageError}</InputError>}
+                  {submitError && <InputError>{submitError}</InputError>}
                   <Button
-                    disabled={!!draft.storageError}
+                    disabled={!!draft.storageError || isSubmitting || guest.busy}
                     size="lg"
                     loading={isSubmitting}
                     onPress={handleSubmit(onSubmit)}
@@ -168,12 +164,13 @@ export default function Screen() {
 
           <View style={styles.bottomArea}>
             <Text style={styles.bottomText}>Already have an Account ?</Text>
-            <Button variant="link" onPress={signIn} disabled={isSubmitting}>
+            <Button variant="link" onPress={signIn} disabled={isSubmitting || guest.busy}>
               <ButtonText>Sign In</ButtonText>
             </Button>
           </View>
           <View style={styles.guestArea}>
-            <Button variant="link" onPress={continueAsGuest} disabled={isSubmitting}>
+            {guest.error && <InputError>{guest.error}</InputError>}
+            <Button variant="link" onPress={guest.continueAsGuest} loading={guest.loading} disabled={isSubmitting || guest.busy}>
               <ButtonText>Continue as guest</ButtonText>
             </Button>
           </View>

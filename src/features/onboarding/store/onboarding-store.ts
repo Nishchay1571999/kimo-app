@@ -4,10 +4,11 @@ import { useStore } from 'zustand';
 import { onboardingStorage } from '@/storage/onboarding-storage';
 import { createOnboardingTransport } from '../services/onboarding-service';
 import { createOnboardingStore, type OnboardingState } from './create-onboarding-store';
+import { sessionStore } from '@/features/auth/store/session-store';
 
 export const onboardingStore = createOnboardingStore(
   onboardingStorage,
-  createOnboardingTransport(process.env.EXPO_PUBLIC_ONBOARDING_URL),
+  createOnboardingTransport(undefined, async () => sessionStore.getState().token),
 );
 
 export function useOnboardingStore<T>(selector: (state: OnboardingState) => T) {

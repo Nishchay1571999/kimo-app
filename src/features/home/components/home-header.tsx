@@ -4,10 +4,12 @@ export function HomeHeader({
   title,
   subtitle,
   avatarUri,
+  avatarLabel = 'K',
 }: {
   title: string;
   subtitle: string;
-  avatarUri: string;
+  avatarUri?: string;
+  avatarLabel?: string;
 }) {
   return (
     <View style={styles.header}>
@@ -16,12 +18,14 @@ export function HomeHeader({
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
 
-      <Image
+      {avatarUri ? <Image
         source={{
           uri: avatarUri,
         }}
         style={styles.avatar}
-      />
+      /> : <View style={[styles.avatar, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ fontSize: 18, fontWeight: '600', color: '#5856E8' }}>{avatarLabel}</Text>
+      </View>}
     </View>
   );
 }

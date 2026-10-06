@@ -3,17 +3,19 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Check, X } from 'lucide-react-native';
 import type { DayData } from '../types';
 
-export function DayStrip({ days }: { days: readonly DayData[] }) {
+export function DayStrip({ days, onSelect }: { days: readonly DayData[]; onSelect: (date: string) => void }) {
   return (
     <ScrollView
+      style={{ flexGrow: 0 }}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.dayStrip}
     >
-      {[...days].reverse().map(day => (
+      {days.map(day => (
         <DayCard
-          key={`${day.day}-${day.date}`}
+          key={day.dateKey}
           {...day}
+          onSelect={onSelect}
         />
       ))}
     </ScrollView>
@@ -25,9 +27,14 @@ function DayCard({
   date,
   recorded,
   active,
-}: DayData) {
+  dateKey,
+  onSelect,
+}: DayData & { onSelect: (date: string) => void }) {
   return (
     <Pressable
+      onPress={() => onSelect(dateKey)} accessibilityRole="button"
+      accessibilityLabel={`${dateKey}${recorded === null ? '' : recorded ? ', entries recorded' : ', no entries'}`}
+      accessibilityState={{ selected: !!active }}
       style={[
         styles.dayCard,
         active && styles.dayCardActive,
@@ -54,12 +61,12 @@ function DayCard({
       <View
         style={[
           styles.dayStatus,
-          recorded
+          recorded === null ? styles.dayStatusUnknown : recorded
             ? styles.dayStatusRecorded
             : styles.dayStatusEmpty,
         ]}
       >
-        {recorded ?<Check size={17} color="#2E9857"/>: <X size={17} color="#D06060"/>}
+        {recorded === null ? <Text style={styles.dayStatusText}>–</Text> : recorded ? <Check size={17} color="#2E9857"/> : <X size={17} color="#D06060"/>}
       </View>
     </Pressable>
   );
@@ -123,6 +130,7 @@ const styles = StyleSheet.create({
   dayStatusRecorded: {
     backgroundColor: '#DDF5E5',
   },
+  dayStatusUnknown: { backgroundColor: '#F0F0F2' },
 
   dayStatusEmpty: {
     backgroundColor: '#F7E6E6',
