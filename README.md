@@ -54,6 +54,40 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Android release size
+
+The local `plugins/with-android-size.js` config plugin enables R8 code shrinking
+and resource shrinking on release builds. Preview APKs target ARM64 phones only;
+the production AAB retains all four architectures so Google Play can deliver the
+appropriate native libraries for each device. Unused Skia and Device are removed.
+Unused direct declarations for Expo UI and Glass Effect are also removed, but
+Expo Router still requires those packages transitively.
+
+Build a sideloadable APK:
+
+```bash
+pnpm dlx eas-cli@latest build --platform android --profile preview
+```
+
+Build a Play Store AAB:
+
+```bash
+pnpm dlx eas-cli@latest build --platform android --profile production
+```
+
+An AAB is uploaded to Play and cannot be installed directly like an APK. These
+commands build artifacts; they do not submit or publish the app.
+
+Native directories are generated and ignored by Git. EAS applies the plugin
+during prebuild. For an existing local Android project, run
+`pnpm expo prebuild --platform android --no-install` before a release build to
+apply the current settings. To generate all architectures locally for a bundle
+or emulator, run prebuild with `EAS_BUILD_PROFILE=production`.
+
+Measure the rebuilt artifact to verify the reduction and smoke-test sign-in,
+photo capture/upload, SQLite draft restoration, navigation, and chat in release
+mode after enabling shrinking.
+
 # API integration
 
 Phases 1–9 connect member registration, sign-in, guest creation/conversion,
