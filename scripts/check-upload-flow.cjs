@@ -21,8 +21,9 @@ const date = '2026-10-06';
 const photo = { id: 'photo-1', type: 'image', mimeType: 'image/jpeg', base64: '/9j/AA==', fileSizeBytes: 4, widthPx: 2, heightPx: 2 };
 function main() {
   const meal = initialValues('nutrition', date, new Date('2026-10-06T10:00:00Z'));
-  meal.title = 'Lunch'; meal.items[0] = { name: 'Rice', quantity: '150', unit: 'g', caloriesKcal: '195', proteinG: '', carbohydratesG: '42', fatG: '0' };
+  meal.title = 'Lunch'; meal.note = 'Rice for lunch'; meal.items[0] = { name: 'Rice', quantity: '150', unit: 'g', caloriesKcal: '195', proteinG: '', carbohydratesG: '42', fatG: '0' };
   assert.ok(entryFormSchema.safeParse(meal).success);
+  assert.equal(entryFormSchema.safeParse({ ...meal, note: ' ' }).success, false, 'Meals need a note describing what was eaten');
   assert.equal(entryFacts(meal).data.items[0].proteinG, null, 'Unknown macros remain unknown');
   assert.equal(entryFacts(meal).data.items[0].fatG, 0, 'Explicit zero is preserved');
   for (const value of ['', '0', '-1', 'Infinity', '1e5', '2..5']) {
@@ -34,7 +35,7 @@ function main() {
   assert.equal(entryFormSchema.safeParse({ ...meal, occurredAt: '2026-02-30T10:00:00Z' }).success, false);
   assert.equal(entryFormSchema.safeParse({ ...meal, items: [] }).success, false);
   assert.equal(entryFormSchema.safeParse({ ...meal, items: Array(101).fill(meal.items[0]) }).success, false);
-  const exercise = { ...initialValues('exercise', date), title: 'Walk', activityName: 'Walking', durationMinutes: '30' };
+  const exercise = { ...initialValues('exercise', date), title: 'Walk', note: '30 min walk', activityName: 'Walking', durationMinutes: '30' };
   assert.ok(entryFormSchema.safeParse(exercise).success);
   assert.equal(entryFacts(exercise).data.estimatedCaloriesBurnedKcal, null);
   assert.equal(entryFormSchema.safeParse({ ...exercise, estimatedCaloriesBurnedKcal: '80' }).success, false);

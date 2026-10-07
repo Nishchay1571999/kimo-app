@@ -63,6 +63,7 @@
     "check:upload": "node scripts/check-upload-flow.cjs",
     "check:entries": "node scripts/check-entry-api.cjs",
     "check:nutrition": "node scripts/check-nutrition-flow.cjs",
+    "check:estimate": "node scripts/check-estimate-flow.cjs",
     "check:summary": "node scripts/check-summary-flow.cjs",
     "check:chat": "node scripts/check-chat-flow.cjs"
   },

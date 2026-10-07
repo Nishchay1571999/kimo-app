@@ -25,6 +25,8 @@ export function draftFacts(draft: UploadDraft) {
     });
     return { ...facts, data: { ...facts.data, items } };
   }
+  // The per-activity breakdown from a confirmed estimate travels with the exercise totals.
+  if (facts.category === 'exercise' && draft.activities?.length) return { ...facts, data: { ...facts.data, activities: draft.activities } };
   return facts;
 }
 export function draftPayload(draft: UploadDraft) {

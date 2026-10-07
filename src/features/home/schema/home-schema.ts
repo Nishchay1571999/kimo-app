@@ -19,6 +19,9 @@ export const dayStatusSchema = z.enum(['on_track', 'over', 'under', 'not_logged'
 export const dayGoalSchema = z.object({
   target: z.object({ caloriesKcal: z.number(), proteinG: z.number() }),
   consumed: z.object({ caloriesKcal: z.number(), proteinG: z.number() }),
+  // Older servers omit exercise; the card then falls back to consumed-only numbers.
+  burned: z.object({ caloriesKcal: z.number(), durationMinutes: z.number(), incomplete: z.boolean() }).optional(),
+  netKcal: z.number().optional(),
   remainingKcal: z.number(), remainingProteinG: z.number(), deltaKcal: z.number(), status: dayStatusSchema,
   biggestMeal: z.object({ entryId: z.string(), title: z.string(), mealCategory: z.string(), caloriesKcal: z.number() }).nullable(),
   insight: z.object({ headline: z.string(), nextStep: z.string().nullable() }),

@@ -38,7 +38,8 @@ export const entryFormSchema = formValuesSchema.superRefine((v, ctx) => {
   if (!reportingDateSchema.safeParse(v.entryDate).success) error(['entryDate'], 'Use a valid date: YYYY-MM-DD');
   if (!z.iso.datetime({ offset: true }).safeParse(v.occurredAt).success) error(['occurredAt'], 'Use an ISO timestamp with Z or a timezone offset');
   if (v.note.trim().length > 10000) error(['note'], 'Use at most 10000 characters');
-  if (v.category === 'note') text(v.note, ['note']);
+  // Every entry needs a note: for meals and workouts it is what Kimo reads to calculate calories.
+  text(v.note, ['note']);
   if (v.category === 'nutrition') {
     if (v.items.length < 1 || v.items.length > 100) error(['items'], 'Add between 1 and 100 foods');
     v.items.forEach((item, i) => {

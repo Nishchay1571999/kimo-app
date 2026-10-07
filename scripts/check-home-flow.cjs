@@ -14,7 +14,7 @@ const { createHomeService } = require('../src/features/home/services/home-servic
 const { homeQueryOptions, homeKey } = require('../src/features/home/queries.ts');
 const { homeSchema } = require('../src/features/home/schema/home-schema.ts');
 const { toTimeline } = require('../src/features/home/home-view.ts');
-const { shiftDate, todayInTimezone, weekDates, formatTime } = require('../src/features/home/calendar.ts');
+const { shiftDate, todayInTimezone, weekDates, windowEnd, formatTime } = require('../src/features/home/calendar.ts');
 const { createRemoteOnboardingService } = require('../src/features/onboarding/services/remote-onboarding-service.ts');
 const { createSessionStore } = require('../src/features/auth/store/create-session-store.ts');
 const { createOnboardingStore } = require('../src/features/onboarding/store/create-onboarding-store.ts');
@@ -38,7 +38,10 @@ async function main() {
   assert.equal(shiftDate('2026-03-08', 1), '2026-03-09');
   assert.equal(shiftDate('2024-02-28', 1), '2024-02-29');
   assert.equal(shiftDate('2026-12-31', 1), '2027-01-01');
-  assert.deepEqual(weekDates('2026-10-04'), ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']);
+  assert.deepEqual(weekDates('2026-10-07', '2026-10-07'), ['2026-10-07', '2026-10-06', '2026-10-05', '2026-10-04', '2026-10-03', '2026-10-02', '2026-10-01']);
+  assert.deepEqual(weekDates('2026-10-03', '2026-10-07'), weekDates('2026-10-07', '2026-10-07'));
+  assert.deepEqual(weekDates('2026-09-30', '2026-10-07'), ['2026-09-30', '2026-09-29', '2026-09-28', '2026-09-27', '2026-09-26', '2026-09-25', '2026-09-24']);
+  assert.equal(windowEnd('2026-10-09', '2026-10-07'), '2026-10-07');
   assert.equal(formatTime('00:30'), '12:30 AM'); assert.equal(formatTime('12:00'), '12:00 PM');
 
   const storage = memory(); const session = createSessionStore(storage);

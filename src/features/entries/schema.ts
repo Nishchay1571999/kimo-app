@@ -13,6 +13,11 @@ export const foodItemSchema = z.object({
   if (item.nutritionSource === 'reference' && !item.reference) context.addIssue({ code: 'custom', path: ['reference'], message: 'Reference nutrition requires its source' });
   if (item.nutritionSource !== 'reference' && item.reference) context.addIssue({ code: 'custom', path: ['reference'], message: 'Manual nutrition cannot contain a food reference' });
 });
+export const exerciseActivitySchema = z.object({
+  activityName: z.string().min(1), durationMinutes: z.number().positive(), intensity: z.enum(['light', 'moderate', 'vigorous']),
+  met: z.number().nonnegative().nullable(), caloriesBurnedKcal: z.number().nonnegative(),
+});
+export type ExerciseActivity = z.infer<typeof exerciseActivitySchema>;
 const common = {
   id: z.uuid(), title: z.string().min(1), entryDate: reportingDateSchema, occurredAt: z.iso.datetime({ offset: true }),
   recordedTimezone: z.string().refine(value => { try { new Intl.DateTimeFormat('en', { timeZone: value }); return true; } catch { return false; } }), inputSource: z.enum(['text', 'image', 'audio', 'mixed']), note: z.string().nullable(),
@@ -23,7 +28,7 @@ const common = {
 };
 export const entrySchema = z.discriminatedUnion('category', [
   z.object({ ...common, category: z.literal('nutrition'), data: z.object({ mealCategory: z.enum(['breakfast', 'lunch', 'dinner', 'snack', 'other']), items: z.array(foodItemSchema).min(1).max(100) }) }),
-  z.object({ ...common, category: z.literal('exercise'), data: z.object({ activityName: z.string(), durationMinutes: z.number().positive(), intensity: z.enum(['light', 'moderate', 'vigorous']), estimatedCaloriesBurnedKcal: macro, calorieEstimationSource: z.string().nullable() }) }),
+  z.object({ ...common, category: z.literal('exercise'), data: z.object({ activityName: z.string(), durationMinutes: z.number().positive(), intensity: z.enum(['light', 'moderate', 'vigorous']), estimatedCaloriesBurnedKcal: macro, calorieEstimationSource: z.string().nullable(), activities: z.array(exerciseActivitySchema).optional() }) }),
   z.object({ ...common, category: z.literal('note'), data: z.object({}) }),
 ]);
 export type Entry = z.infer<typeof entrySchema>;

@@ -24,7 +24,8 @@ export function useHome(requestedDate?: string) {
   }, [refreshToday]);
   const validDate = requestedDate === undefined || Boolean(reportingDateSchema.safeParse(requestedDate).success);
   const onboarded = Boolean(account?.onboardingCompleted);
-  const date = validDate ? requestedDate ?? today : today;
+  // Today is the newest selectable day.
+  const date = validDate && requestedDate !== undefined && requestedDate <= today ? requestedDate : today;
   const identity = { id: account?.id ?? 'visitor', epoch, timezone };
   const query = useQuery({ ...homeQueryOptions(service, identity, date, activeSince), enabled: onboarded && validDate && activeSince !== null });
   const { refetch } = query;
@@ -35,7 +36,7 @@ export function useHome(requestedDate?: string) {
     const cached = queryClient.getQueryState<Home>(homeKey({ id: ownerId, epoch, timezone }, date));
     if (cached?.data && cached.fetchStatus !== 'fetching' && (homeHasPendingAnalysis(cached.data) || activeSince - cached.dataUpdatedAt >= 30000)) void refetch();
   }, [activeSince, onboarded, validDate, ownerId, epoch, timezone, date, refetch]);
-  const dates = weekDates(date);
+  const dates = weekDates(date, today);
   const week = useQuery({ ...weekQueryOptions(service, identity, dates[0]), enabled: onboarded && validDate && activeSince !== null });
   const days: DayData[] = dates.map(dateKey => {
     const status = week.data?.days.find(day => day.date === dateKey);

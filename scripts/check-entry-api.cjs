@@ -68,7 +68,7 @@ async function main() {
     const values = initialValues(category, date, new Date('2026-10-06T10:00:00Z')); values.title = 'Lunch';
     if (category === 'nutrition') values.items[0] = { name: 'Rice', quantity: '150', unit: 'g', caloriesKcal: '195', proteinG: '', carbohydratesG: '42', fatG: '0' };
     if (category === 'exercise') Object.assign(values, { activityName: 'Walking', durationMinutes: '30' });
-    if (category === 'note') values.note = 'Felt rested';
+    values.note = category === 'note' ? 'Felt rested' : 'Rice for lunch';
     drafts.getState().update(draftId, values); drafts.getState().flush();
   };
   try {

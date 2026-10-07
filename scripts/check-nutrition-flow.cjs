@@ -62,6 +62,7 @@ async function main() {
   const entries = createEntryService(api, () => owner);
   const storage = memory(); const drafts = createUploadStore(storage);
   drafts.getState().activate(guest.id); drafts.getState().start('meal', 'nutrition', '2026-10-06', 'day');
+  drafts.getState().update('meal', { ...drafts.getState().draft.values, note: 'Rice and milk for lunch' });
   drafts.getState().update('meal', { ...drafts.getState().draft.values, title: 'Lunch' });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false, gcTime: 0 } } });
   const calculate = new MutationObserver(client, { mutationFn: input => service.calculate(input, owner) });

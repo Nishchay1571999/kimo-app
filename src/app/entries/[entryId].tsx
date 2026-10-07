@@ -65,14 +65,15 @@ export default function EntryScreen() {
           <Text style={styles.text}>{macroLine(entry.data.items)}</Text>
           {entry.data.items.map(food => <Text key={food.id} style={styles.muted}>{food.name} · {food.quantity} {food.unit} · {food.caloriesKcal ?? '?'} kcal</Text>)}
         </>}
-        {entry.category === 'exercise' && <><Text style={styles.section}>{entry.data.activityName}</Text><Text style={styles.text}>{entry.data.durationMinutes} minutes · {entry.data.intensity}{entry.data.estimatedCaloriesBurnedKcal === null ? '' : ` · ~${entry.data.estimatedCaloriesBurnedKcal} kcal burned`}</Text></>}
+        {entry.category === 'exercise' && <><Text style={styles.section}>{entry.data.activityName}</Text><Text style={styles.text}>{entry.data.durationMinutes} minutes · {entry.data.intensity}{entry.data.estimatedCaloriesBurnedKcal === null ? '' : ` · ~${Math.round(entry.data.estimatedCaloriesBurnedKcal)} kcal burned`}</Text>
+          {entry.data.activities && entry.data.activities.length > 1 && entry.data.activities.map((activity, i) => <Text key={i} style={styles.muted}>{activity.activityName} · {activity.durationMinutes} min · ~{Math.round(activity.caloriesBurnedKcal)} kcal</Text>)}</>}
         {!!entry.note && <Text style={styles.text}>{entry.note}</Text>}
         <AnalysisSummary ai={entry.ai} />
         {entry.category === 'nutrition' && <Action secondary onPress={() => askKimo(mealQuestion(entry.title, entry.entryDate, entry.id))}>Ask Kimo about this meal</Action>}
         <DetailsDisclosure>
           <Text style={detailStyles.row}>Recorded: {new Date(entry.occurredAt).toLocaleString(undefined, { timeZone: entry.recordedTimezone })} ({entry.recordedTimezone}) · counted on {entry.entryDate}</Text>
           {entry.category === 'nutrition' && entry.data.items.map(food => <Text key={food.id} style={detailStyles.row}>{food.name}: {food.nutritionSource === 'reference' && food.reference ? providerLabel(food.reference.provider) : food.nutritionSource === 'estimated' ? 'Estimated' : 'Entered manually'} · P {food.proteinG ?? '?'} g · C {food.carbohydratesG ?? '?'} g · F {food.fatG ?? '?'} g</Text>)}
-          {entry.category === 'exercise' && entry.data.estimatedCaloriesBurnedKcal !== null && <Text style={detailStyles.row}>Calories burned source: {entry.data.calorieEstimationSource}</Text>}
+          {entry.category === 'exercise' && entry.data.estimatedCaloriesBurnedKcal !== null && <Text style={detailStyles.row}>Calories burned source: {entry.data.calorieEstimationSource === 'ai_met_estimate' ? 'Kimo estimate (MET × body weight)' : entry.data.calorieEstimationSource}</Text>}
           <Text style={detailStyles.row}>{analysisView(entry.ai).label}{entry.ai.errorCode ? ` (${entry.ai.errorCode})` : ''}</Text>
           {analysisPending(entry.ai) && <Action secondary disabled={query.isFetching || busy} onPress={() => { void query.refetch(); }}>{query.isFetching ? 'Checking…' : 'Check for analysis'}</Action>}
           <Text style={detailStyles.row}>Revision {entry.revision} · ID {entry.id}</Text>

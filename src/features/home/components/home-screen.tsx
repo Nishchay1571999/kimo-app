@@ -9,7 +9,7 @@ import { HomeHeader } from './home-header';
 import { TodayCard } from './today-card';
 import { Timeline } from './timeline';
 import { useHome } from '../hooks/use-home';
-import { dateLabel, shiftDate } from '../calendar';
+import { dateLabel, shiftDate, windowEnd } from '../calendar';
 import { toTimeline } from '../home-view';
 import { homeHasPendingAnalysis } from '../queries';
 
@@ -27,7 +27,7 @@ export function HomeScreen({ history = false }: { history?: boolean }) {
     <View style={styles.controls}>
       <Button variant="ghost" onPress={() => selectDate(shiftDate(date, -7))} accessibilityLabel="Previous week"><ButtonText>‹ Week</ButtonText></Button>
       <Button variant="link" onPress={() => selectDate(today)}><ButtonText>Today</ButtonText></Button>
-      <Button variant="ghost" onPress={() => selectDate(shiftDate(date, 7))} accessibilityLabel="Next week"><ButtonText>Week ›</ButtonText></Button>
+      <Button variant="ghost" disabled={windowEnd(date, today) === today} onPress={() => { const next = shiftDate(date, 7); selectDate(next > today ? today : next); }} accessibilityLabel="Next week"><ButtonText>Week ›</ButtonText></Button>
     </View>
     <DayStrip days={days} onSelect={selectDate} />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}
@@ -46,7 +46,7 @@ export function HomeScreen({ history = false }: { history?: boolean }) {
           <DaySectionHeader eyebrow="WHAT YOU LOGGED" title={date === today ? 'Today' : dateLabel(date)}
             onHistory={history ? undefined : () => router.push({ pathname: '/history/day/[date]', params: { date } })} />
           {homeHasPendingAnalysis(data) && <Text style={styles.analysisNotice}>Kimo is reading your latest entry…</Text>}
-          {!data.timeline.some(item => item.type === 'entry') && <View style={styles.message}><Text style={styles.empty}>{date === today ? "Tap + to add a meal, exercise or note." : 'Nothing was logged this day.'}</Text></View>}
+          {!data.timeline.some(item => item.type === 'entry') && <View style={styles.message}><Text style={styles.empty}>{date === today ? "Tap + to log a meal or workout." : 'Nothing was logged this day.'}</Text></View>}
           <Timeline items={toTimeline(data)} onOpenEntry={entryId => router.push({ pathname: '/entries/[entryId]', params: { entryId, date, origin } })} />
         </>}
     </ScrollView>

@@ -2,12 +2,12 @@ import { createStore } from 'zustand/vanilla';
 import { z } from 'zod';
 import { formValuesSchema, initialValues, photoSchema, validatePhotos, type DraftPhoto, type EntryCategory, type EntryFormValues } from '../schema';
 import { reportingDateSchema } from '../../home/schema/home-schema';
-import { foodItemSchema, type FoodItem } from '../../entries/schema';
+import { exerciseActivitySchema, foodItemSchema, type ExerciseActivity, type FoodItem } from '../../entries/schema';
 import { addCalculatedFood } from '../../nutrition/draft';
 
 export const editMetadataSchema = z.object({ entryId: z.uuid(), revision: z.number().int().positive(), originalDate: reportingDateSchema, originalItems: z.array(foodItemSchema) });
 export type EditMetadata = z.infer<typeof editMetadataSchema>;
-const draftSchema = z.object({ id: z.string(), ownerId: z.string(), origin: z.string(), sourceDate: reportingDateSchema, values: formValuesSchema, photos: z.array(photoSchema), edit: editMetadataSchema.optional(), savedEntryId: z.uuid().optional(), nutritionItems: z.array(foodItemSchema).max(100).optional() });
+const draftSchema = z.object({ id: z.string(), ownerId: z.string(), origin: z.string(), sourceDate: reportingDateSchema, values: formValuesSchema, photos: z.array(photoSchema), edit: editMetadataSchema.optional(), savedEntryId: z.uuid().optional(), nutritionItems: z.array(foodItemSchema).max(100).optional(), activities: z.array(exerciseActivitySchema).max(20).optional() });
 export type UploadDraft = z.infer<typeof draftSchema>;
 type Storage = { getItem(key: string): string | null; setItem(key: string, value: string): void; removeItem(key: string): void };
 export type UploadState = {
@@ -17,6 +17,8 @@ export type UploadState = {
   acknowledgeSave(id: string, entryId: string): boolean;
   beginEdit(id: string, edit: EditMetadata, values: EntryFormValues, photos: DraftPhoto[], origin: string): boolean;
   addNutritionFood(ownerId: string, id: string, item: FoodItem, targetId?: string, expectedTarget?: EntryFormValues['items'][number]): EntryFormValues;
+  /** Writes a confirmed calorie estimate into the draft, replacing earlier foods or activities. */
+  applyEstimate(id: string, values: EntryFormValues, result: { nutritionItems?: FoodItem[]; activities?: ExerciseActivity[] }): void;
   retryStorage(): boolean;
   activate(ownerId: string | null): void;
   start(id: string, category: EntryCategory, date: string, origin: string): void;
@@ -81,6 +83,13 @@ export function createUploadStore(storage: Storage) {
         const ids = new Set(result.values.items.map(food => food.id));
         const nutritionItems = [...(draft.nutritionItems ?? []).filter(food => food.id !== result.item.id && ids.has(food.id)), result.item];
         changed({ ...draft, values: result.values, nutritionItems }); persist(); return result.values;
+      },
+      applyEstimate(id, values, result) {
+        const draft = get().draft;
+        if (draft?.id !== id || get().savingId || draft.savedEntryId) throw new Error('Your draft changed. Calculate again.');
+        changed({ ...draft, values: formValuesSchema.parse(values), nutritionItems: result.nutritionItems?.map(item => foodItemSchema.parse(item)),
+          activities: result.activities?.map(activity => exerciseActivitySchema.parse(activity)) });
+        if (!persist()) throw new Error('Keep your draft on this device before saving. Retry draft storage first.');
       },
       retryStorage() {
         if (!get().restoreFailed) return persist();

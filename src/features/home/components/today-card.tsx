@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Sparkles } from 'lucide-react-native';
+import { Dumbbell, Sparkles } from 'lucide-react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/Button';
 import { askKimo, dayQuestion } from '@/features/kimo/ask';
@@ -22,30 +22,42 @@ function Progress({ value, max, over }: { value: number; max: number; over?: boo
   </View>;
 }
 
+function ExerciseRow({ minutes, burnedKcal, incomplete }: { minutes: number; burnedKcal: number | null; incomplete: boolean }) {
+  return <View style={styles.exercise} accessibilityLabel={`Exercise: ${n(minutes)} minutes${burnedKcal === null ? '' : `, about ${n(burnedKcal)} kilocalories burned`}`}>
+    <View style={styles.exerciseIcon}><Dumbbell size={16} color="#1F7A43" /></View>
+    <View style={{ flex: 1 }}>
+      <Text style={styles.label}>Exercise</Text>
+      <Text style={styles.muted}>{minutes > 0 ? `${n(minutes)} min${incomplete ? ' · some without an estimate' : ''}` : 'No exercise logged'}</Text>
+    </View>
+    <Text style={styles.burned}>{burnedKcal ? `−${n(burnedKcal)} kcal` : '—'}</Text>
+  </View>;
+}
+
 /** Answers "Where am I? → Why? → What next?" for the selected day. */
 export function TodayCard({ home }: { home: Home }) {
   const { goal, day, summary } = home;
   const isToday = day.isToday;
-  const exercise = summary.exercise.durationMinutes > 0
-    ? `${n(summary.exercise.durationMinutes)} min exercise${summary.exercise.caloriesBurnedKcal === null ? '' : ` · ~${n(summary.exercise.caloriesBurnedKcal)} kcal burned`}`
-    : null;
+  const minutes = summary.exercise.durationMinutes;
   if (!goal) return <View style={styles.card}>
     <Text style={styles.eyebrow}>{isToday ? 'TODAY' : day.weekday.toUpperCase()}</Text>
     <Text style={styles.headline}>{n(summary.nutrition.caloriesConsumedKcal)} kcal logged</Text>
-    {exercise && <Text style={styles.muted}>{exercise}</Text>}
+    <ExerciseRow minutes={minutes} burnedKcal={summary.exercise.caloriesBurnedKcal} incomplete={minutes > 0 && summary.exercise.caloriesBurnedKcal === null} />
     <Text style={styles.body}>Set a daily target so Kimo can tell you how each day is going and what to do next.</Text>
     <Button onPress={() => router.push({ pathname: '/goals/current', params: { origin: 'home' } })}><ButtonText>Set your daily target</ButtonText></Button>
   </View>;
   const over = goal.remainingKcal < 0;
+  const burned = goal.burned?.caloriesKcal ?? 0;
+  const net = goal.netKcal ?? goal.consumed.caloriesKcal;
   return <View style={styles.card}>
     <Text style={styles.eyebrow}>{isToday ? 'TODAY' : day.weekday.toUpperCase()}</Text>
     <Text style={[styles.headline, goal.status === 'over' && styles.headlineOver]}>{statusHeadline(goal, isToday, day.weekday)}</Text>
     <View style={styles.metric}>
       <View style={styles.metricRow}>
-        <Text style={styles.metricValue}>{n(goal.consumed.caloriesKcal)} <Text style={styles.metricOf}>/ {n(goal.target.caloriesKcal)} kcal</Text></Text>
+        <Text style={styles.metricValue}>{n(net)} <Text style={styles.metricOf}>/ {n(goal.target.caloriesKcal)} kcal{burned > 0 ? ' net' : ''}</Text></Text>
         {isToday && <Text style={[styles.remaining, over && styles.remainingOver]}>{over ? `${n(-goal.remainingKcal)} over` : `${n(goal.remainingKcal)} left`}</Text>}
       </View>
-      <Progress value={goal.consumed.caloriesKcal} max={goal.target.caloriesKcal} over={over} />
+      <Progress value={Math.max(0, net)} max={goal.target.caloriesKcal} over={over} />
+      {burned > 0 && <Text style={styles.muted}>Eaten {n(goal.consumed.caloriesKcal)} − Burned {n(burned)} = Net {n(net)} kcal</Text>}
     </View>
     <View style={styles.metric}>
       <View style={styles.metricRow}>
@@ -54,7 +66,7 @@ export function TodayCard({ home }: { home: Home }) {
       </View>
       <Progress value={goal.consumed.proteinG} max={goal.target.proteinG} />
     </View>
-    {exercise && <Text style={styles.muted}>{exercise}</Text>}
+    <ExerciseRow minutes={goal.burned?.durationMinutes ?? minutes} burnedKcal={goal.burned ? burned : summary.exercise.caloriesBurnedKcal} incomplete={goal.burned?.incomplete ?? false} />
     <View style={styles.insight}>
       <View style={styles.insightTitle}><Sparkles size={14} color="#4D4BD8" /><Text style={styles.insightLabel}>Kimo noticed</Text></View>
       <Text style={styles.body}>{goal.insight.headline}</Text>
@@ -63,7 +75,7 @@ export function TodayCard({ home }: { home: Home }) {
         <Text style={styles.body}>{goal.insight.nextStep}</Text>
       </>}
     </View>
-    {goal.status !== 'not_logged' && <Button variant="outline" onPress={() => askKimo(dayQuestion(home.date, isToday, goal))}>
+    {(goal.status !== 'not_logged' || burned > 0) && <Button variant="outline" onPress={() => askKimo(dayQuestion(home.date, isToday, goal))}>
       <ButtonText>{isToday ? 'Ask Kimo about today' : goal.status === 'over' ? 'Ask Kimo why' : 'Ask Kimo about this day'}</ButtonText>
     </Button>}
   </View>;
@@ -82,4 +94,7 @@ const styles = StyleSheet.create({
   insightTitle: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   insightLabel: { fontSize: 12, fontWeight: '700', color: '#4D4BD8', letterSpacing: 0.3 },
   body: { fontSize: 15, lineHeight: 22, color: '#27282D' },
+  exercise: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: '#F3FAF5' },
+  exerciseIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#DDF5E5', alignItems: 'center', justifyContent: 'center' },
+  burned: { fontSize: 15, fontWeight: '700', color: '#1F7A43' },
 });

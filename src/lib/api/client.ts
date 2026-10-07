@@ -4,7 +4,7 @@ export class ApiError extends Error {
   constructor(message: string, public status: number, public code: string) { super(message); }
 }
 
-type RequestOptions = { method?: string; body?: unknown; signal?: AbortSignal; authenticated?: boolean; identity?: Identity };
+type RequestOptions = { method?: string; body?: unknown; signal?: AbortSignal; authenticated?: boolean; identity?: Identity; timeoutMs?: number };
 type Identity = { token: string | null; epoch: number };
 type Interceptors = {
   getIdentity: () => Identity;
@@ -90,6 +90,7 @@ export function createApiClient(baseUrl: string, interceptors: Interceptors, ada
     async request(path: string, options: RequestOptions = {}): Promise<unknown> {
       const response = await client.request<unknown>({
         url: path, method: options.method ?? 'GET', data: options.body,
+        ...(options.timeoutMs ? { timeout: options.timeoutMs } : {}),
         signal: options.signal, authenticated: options.authenticated !== false, expectedIdentity: options.identity,
       } as Parameters<typeof client.request>[0] & { authenticated: boolean; expectedIdentity?: Identity });
       return response.status === 204 ? null : response.data;

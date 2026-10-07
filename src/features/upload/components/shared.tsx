@@ -9,7 +9,8 @@ import type { UploadDraft } from '../store/create-upload-store';
 import { usePhotos } from '../use-photos';
 import { reportingDateSchema } from '@/features/home/schema/home-schema';
 
-export const formRoute = (category: UploadDraft['values']['category']) => category === 'nutrition' ? '/entries/new-meal' : category === 'exercise' ? '/entries/new-exercise' : '/entries/new-note';
+// Meals and workouts share the capture screen (title + note + photo); only legacy notes keep their own form.
+export const formRoute = (category: UploadDraft['values']['category']) => category === 'note' ? '/entries/new-note' : '/capture';
 export function draftRoute(draft: UploadDraft, review = false): Href {
   const date = reportingDateSchema.safeParse(draft.values.entryDate).success ? draft.values.entryDate : draft.sourceDate;
   return { pathname: review || draft.savedEntryId ? '/capture/review' : formRoute(draft.values.category), params: { date, origin: draft.origin } };
@@ -40,13 +41,13 @@ export function StorageNotice() {
   return error ? <View style={styles.card}><Text accessibilityRole="alert" style={styles.error}>{error}</Text>
     <Action secondary onPress={() => { uploadStore.getState().retryStorage(); }}>Retry draft storage</Action></View> : null;
 }
-export function Photos({ draft }: { draft: UploadDraft }) {
+export function Photos({ draft, title = 'Attachments', hint = 'Add context to your entry. Confirm the details yourself before reviewing.' }: { draft: UploadDraft; title?: string; hint?: string }) {
   const { pick, busy, error } = usePhotos();
   const saving = useUploadStore(s => !!s.savingId);
   const locked = busy || saving || !!draft.savedEntryId;
   return <View style={styles.card}>
-    <Text style={styles.section}>Attachments · {draft.photos.length}/10</Text>
-    <Text style={styles.muted}>Add context to your entry. Confirm the details yourself before reviewing.</Text>
+    <Text style={styles.section}>{title} · {draft.photos.length}/10</Text>
+    <Text style={styles.muted}>{hint}</Text>
     <View style={styles.row}>
       <Button variant="outline" disabled={locked} onPress={() => { void pick('camera'); }}><ButtonText>Take photo</ButtonText></Button>
       <Button variant="outline" disabled={locked} onPress={() => { void pick('gallery'); }}><ButtonText>Choose photos</ButtonText></Button>
