@@ -1,19 +1,12 @@
-import { DummyScreen } from '@/components/dummy-screen';
+import { router } from 'expo-router';
 import { useDemoNavigation } from '@/hooks/use-demo-navigation';
+import { TargetForm } from '@/features/goals/components/target-form';
+import { UploadPage } from '@/features/upload/components/shared';
 
 export default function Screen() {
   const nav = useDemoNavigation();
-  return (
-    <DummyScreen
-      title="Current monthly goal"
-      description="Inspect the current month\u2019s target."
-      details={['Example: maintain 72 kg this month']}
-      actions={[
-  { label: 'Edit goal', href: nav.withOrigin('/goals/edit') },
-  { label: 'Return', href: nav.backToOrigin, replace: true },
-  { label: 'Home', href: '/(tabs)', replace: true },
-  { label: 'Profile', href: '/(tabs)/profile', replace: true },
-]}
-    />
-  );
+  const close = () => router.replace(nav.backToOrigin);
+  return <UploadPage eyebrow="YOUR GOAL" title="Daily target" subtitle="Kimo compares each day with this target to tell you how you're doing and what to change." onClose={close}>
+    <TargetForm confirmLabel="Save target" onConfirmed={close} />
+  </UploadPage>;
 }

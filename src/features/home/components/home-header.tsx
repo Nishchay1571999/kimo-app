@@ -1,15 +1,17 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export function HomeHeader({
   title,
   subtitle,
   avatarUri,
   avatarLabel = 'K',
+  onAvatarPress,
 }: {
   title: string;
   subtitle: string;
   avatarUri?: string;
   avatarLabel?: string;
+  onAvatarPress?: () => void;
 }) {
   return (
     <View style={styles.header}>
@@ -18,6 +20,7 @@ export function HomeHeader({
         <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
 
+      <Pressable onPress={onAvatarPress} disabled={!onAvatarPress} accessibilityRole="button" accessibilityLabel="Settings" hitSlop={6}>
       {avatarUri ? <Image
         source={{
           uri: avatarUri,
@@ -26,6 +29,7 @@ export function HomeHeader({
       /> : <View style={[styles.avatar, { alignItems: 'center', justifyContent: 'center' }]}>
         <Text style={{ fontSize: 18, fontWeight: '600', color: '#5856E8' }}>{avatarLabel}</Text>
       </View>}
+      </Pressable>
     </View>
   );
 }

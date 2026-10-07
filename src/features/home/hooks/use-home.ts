@@ -4,7 +4,7 @@ import { useActiveScreen } from '@/hooks/use-active-screen';
 import { api } from '@/lib/api';
 import { queryClient } from '@/lib/query-client';
 import { useSessionStore } from '@/features/auth/store/session-store';
-import { homeHasPendingAnalysis, homeKey, homeQueryOptions } from '../queries';
+import { homeHasPendingAnalysis, homeKey, homeQueryOptions, weekQueryOptions } from '../queries';
 import { createHomeService } from '../services/home-service';
 import { reportingDateSchema, type Home } from '../schema/home-schema';
 import { todayInTimezone, weekDates } from '../calendar';
@@ -35,11 +35,13 @@ export function useHome(requestedDate?: string) {
     const cached = queryClient.getQueryState<Home>(homeKey({ id: ownerId, epoch, timezone }, date));
     if (cached?.data && cached.fetchStatus !== 'fetching' && (homeHasPendingAnalysis(cached.data) || activeSince - cached.dataUpdatedAt >= 30000)) void refetch();
   }, [activeSince, onboarded, validDate, ownerId, epoch, timezone, date, refetch]);
-  const days: DayData[] = weekDates(date).map(dateKey => {
-    const cached = queryClient.getQueryData<Home>(homeKey(identity, dateKey));
+  const dates = weekDates(date);
+  const week = useQuery({ ...weekQueryOptions(service, identity, dates[0]), enabled: onboarded && validDate && activeSince !== null });
+  const days: DayData[] = dates.map(dateKey => {
+    const status = week.data?.days.find(day => day.date === dateKey);
     return { dateKey, day: dateKey === today ? 'Today' : new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short' }).format(new Date(dateKey)),
       date: String(Number(dateKey.slice(-2))), active: dateKey === date,
-      recorded: cached ? cached.timeline.some(item => item.type === 'entry') : null };
+      status: status?.status ?? null, deltaKcal: status?.deltaKcal ?? null };
   });
   return { query, account, date, today, days, validDate };
 }

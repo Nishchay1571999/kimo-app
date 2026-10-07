@@ -61,6 +61,8 @@ function RootNavigator() {
             <Stack.Screen name="history/day/[date]" options={{ headerShown: false }} />
             <Stack.Screen name="goals/current" options={{ headerShown: false }} />
             <Stack.Screen name="goals/edit" options={{ headerShown: false }} />
+            <Stack.Screen name="entries/saved" options={{ headerShown: false }} />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
             <Stack.Screen name="weight/new" options={{ headerShown: false }} />
             <Stack.Screen name="chat" options={{ headerShown: false }} />
           </Stack.Protected>

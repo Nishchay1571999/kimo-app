@@ -13,3 +13,8 @@ export function homeQueryOptions(service: ReturnType<typeof createHomeService>, 
     refetchInterval: query => analysisPollInterval(homeHasPendingAnalysis(query.state.data), query.state.status === 'error', activeSince),
   });
 }
+// Shares the 'home' key segment so saving an entry also refreshes week statuses.
+export const weekKey = (identity: HomeIdentity, date: string) => ['account', identity.epoch, 'home', identity.id, identity.timezone, 'week', date] as const;
+export function weekQueryOptions(service: ReturnType<typeof createHomeService>, identity: HomeIdentity, date: string) {
+  return queryOptions({ queryKey: weekKey(identity, date), queryFn: ({ signal }) => service.week(date, signal), staleTime: 30000, gcTime: 120000, retry: false });
+}

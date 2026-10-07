@@ -27,10 +27,10 @@ export function useDraft() {
 export function Action({ children, onPress, disabled, secondary = false }: { children: string; onPress: () => void; disabled?: boolean; secondary?: boolean }) {
   return <Button size="lg" variant={secondary ? 'outline' : 'default'} disabled={disabled} onPress={onPress} style={!secondary && styles.primary}><ButtonText>{children}</ButtonText></Button>;
 }
-export function UploadPage({ title, subtitle, children, onClose }: { title: string; subtitle: string; children: ReactNode; onClose: () => void }) {
+export function UploadPage({ title, subtitle, children, onClose, eyebrow = 'YOUR DAILY LOG' }: { title: string; subtitle: string; children: ReactNode; onClose: () => void; eyebrow?: string }) {
   return <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
-      <View style={styles.header}><Text style={styles.eyebrow}>YOUR DAILY LOG</Text><Button variant="ghost" onPress={onClose} accessibilityLabel="Close and keep draft"><ButtonText>Close</ButtonText></Button></View>
+      <View style={styles.header}><Text style={styles.eyebrow}>{eyebrow}</Text><Button variant="ghost" onPress={onClose} accessibilityLabel="Close"><ButtonText>Close</ButtonText></Button></View>
       <Text style={styles.title}>{title}</Text><Text style={styles.muted}>{subtitle}</Text>{children}
     </ScrollView>
   </KeyboardAvoidingView>;

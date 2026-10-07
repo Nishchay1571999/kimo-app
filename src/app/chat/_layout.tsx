@@ -36,7 +36,7 @@ export default function ChatLayout() {
           drawerStyle: { backgroundColor: theme.background },
           sceneStyle: { backgroundColor: theme.background },
         }}>
-        <Drawer.Screen name="new" options={{ title: 'New chat' }} />
+        <Drawer.Screen name="new" options={{ title: 'Kimo' }} />
         <Drawer.Screen name="[threadId]" options={{ title: 'Conversation' }} />
       </Drawer>
     </GestureHandlerRootView>

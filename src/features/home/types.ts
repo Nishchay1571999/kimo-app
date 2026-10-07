@@ -1,3 +1,4 @@
+import type { Week } from './schema/home-schema';
 import type { EntryAnalysis } from '../entries/analysis';
 
 export type EntryType = 'image' | 'audio' | 'text';
@@ -24,6 +25,8 @@ export type DayData = {
   dateKey: string;
   day: string;
   date: string;
-  recorded: boolean | null;
+  /** Null while the week's statuses are loading. */
+  status: Week['days'][number]['status'] | null;
+  deltaKcal: number | null;
   active?: boolean;
 };

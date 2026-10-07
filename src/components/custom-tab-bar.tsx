@@ -1,5 +1,5 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Brain, BrainCircuit, House, HousePlug, UserRoundPlus } from 'lucide-react-native';
+import { Brain, BrainCircuit, House, HousePlug } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AnimatedTabIcon } from '@/components/animated-tab-icon';
@@ -8,7 +8,6 @@ import { useTheme } from '@/hooks/use-theme';
 const tabIcons = {
   index: { inactive: House, active: HousePlug },
   ai: { inactive: Brain, active: BrainCircuit },
-  profile: { inactive: UserRoundPlus, active: UserRoundPlus },
 };
 
 export function CustomTabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {

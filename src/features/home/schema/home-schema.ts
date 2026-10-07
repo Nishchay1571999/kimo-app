@@ -15,6 +15,23 @@ const entrySchema = z.object({
   note: z.string().nullable(), occurredAt: z.iso.datetime({ offset: true }),
   entryDate: reportingDateSchema, attachments: z.array(attachmentSchema), ai: entryAnalysisSchema,
 }).passthrough();
+export const dayStatusSchema = z.enum(['on_track', 'over', 'under', 'not_logged', 'in_progress']);
+export const dayGoalSchema = z.object({
+  target: z.object({ caloriesKcal: z.number(), proteinG: z.number() }),
+  consumed: z.object({ caloriesKcal: z.number(), proteinG: z.number() }),
+  remainingKcal: z.number(), remainingProteinG: z.number(), deltaKcal: z.number(), status: dayStatusSchema,
+  biggestMeal: z.object({ entryId: z.string(), title: z.string(), mealCategory: z.string(), caloriesKcal: z.number() }).nullable(),
+  insight: z.object({ headline: z.string(), nextStep: z.string().nullable() }),
+});
+export const weekSchema = z.object({
+  from: reportingDateSchema, to: reportingDateSchema, hasTarget: z.boolean(),
+  days: z.array(z.object({
+    date: reportingDateSchema, status: z.union([dayStatusSchema, z.enum(['logged', 'future'])]),
+    caloriesKcal: z.number(), deltaKcal: z.number().nullable(),
+  })),
+});
+export type DayGoal = z.infer<typeof dayGoalSchema>;
+export type Week = z.infer<typeof weekSchema>;
 export const homeSchema = z.object({
   date: reportingDateSchema, timezone: z.string().refine((value) => {
     try { new Intl.DateTimeFormat('en-US', { timeZone: value }); return true; } catch { return false; }
@@ -25,6 +42,8 @@ export const homeSchema = z.object({
     nutrition: z.object({ caloriesConsumedKcal: z.number().nonnegative(), entryCount: z.number().int().nonnegative() }),
     exercise: z.object({ durationMinutes: z.number().nonnegative(), caloriesBurnedKcal: z.number().nonnegative().nullable() }),
   }),
+  // Older servers omit the field; treat that the same as "no confirmed target".
+  goal: dayGoalSchema.nullable().optional().transform(value => value ?? null),
   timeline: z.array(z.discriminatedUnion('type', [
     z.object({ type: z.literal('boundary'), boundary: z.enum(['wake', 'sleep']), date: reportingDateSchema, time: timeSchema }),
     z.object({ type: z.literal('entry'), date: reportingDateSchema, time: timeSchema, outsideSchedule: z.boolean(), entry: entrySchema }),

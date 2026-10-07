@@ -9,7 +9,9 @@ import { entryToForm } from '@/features/entries/draft';
 import { ApiError } from '@/lib/api/client';
 import { providerLabel } from '@/features/nutrition/schema';
 import { AnalysisSummary } from '@/features/entries/components/analysis-summary';
-import { analysisPending } from '@/features/entries/analysis';
+import { analysisPending, analysisView } from '@/features/entries/analysis';
+import { DetailsDisclosure, detailStyles } from '@/components/details-disclosure';
+import { askKimo, mealQuestion } from '@/features/kimo/ask';
 import { uploadStore } from '@/features/upload/store/upload-store';
 import { Action, closeTo, draftRoute, StorageNotice, styles, UploadPage, useDraft } from '@/features/upload/components/shared';
 
@@ -50,7 +52,7 @@ export default function EntryScreen() {
       onSettled: () => { pendingDelete.current = false; },
     });
   };
-  return <UploadPage title={entry?.title ?? 'Entry details'} subtitle="View the facts and attachments saved to your account." onClose={() => closeTo(nav.backToOrigin)}>
+  return <UploadPage title={entry?.title ?? 'Entry'} subtitle={entry?.category === 'nutrition' ? capitalize(entry.data.mealCategory) : ''} onClose={() => closeTo(nav.backToOrigin)}>
     <StorageNotice />
     {!validId ? <Text style={styles.error}>This entry link is invalid.</Text> : query.isPending ? <ActivityIndicator accessibilityLabel="Loading entry" /> : !entry ? <View style={styles.card}>
       <Text accessibilityRole="alert" style={styles.error}>{query.error instanceof ApiError && query.error.status === 404 ? 'This entry was deleted or is not available to your account.' : query.error?.message ?? 'Could not load the entry.'}</Text>
@@ -58,21 +60,23 @@ export default function EntryScreen() {
     </View> : <>
       {query.isError && <Text style={styles.error}>Could not refresh this entry. Showing the last loaded version.</Text>}
       <View style={styles.card}>
-        <Text style={styles.text}>Reporting date: {entry.entryDate}</Text>
-        <Text style={styles.muted}>Occurred at: {new Date(entry.occurredAt).toLocaleString(undefined, { timeZone: entry.recordedTimezone })} · {entry.recordedTimezone}</Text>
         {entry.category === 'nutrition' && <>
-          <Text style={styles.section}>{entry.data.mealCategory} · {entry.summary.caloriesKcal} kcal</Text>
-          {entry.data.items.map(food => <View key={food.id} style={{ gap: 4 }}><Text style={styles.text}>{food.name} · {food.quantity} {food.unit}</Text>
-            <Text style={styles.muted}>{food.caloriesKcal} kcal · Protein {food.proteinG ?? 'unknown'} g · Carbs {food.carbohydratesG ?? 'unknown'} g · Fat {food.fatG ?? 'unknown'} g</Text>
-            <Text style={styles.muted}>Nutrition source: {food.nutritionSource === 'reference' && food.reference ? providerLabel(food.reference.provider) : food.nutritionSource === 'estimated' ? 'Estimated' : 'Entered manually'}</Text></View>)}
+          <Text style={styles.title}>{Math.round(entry.summary.caloriesKcal ?? 0).toLocaleString('en-US')} kcal</Text>
+          <Text style={styles.text}>{macroLine(entry.data.items)}</Text>
+          {entry.data.items.map(food => <Text key={food.id} style={styles.muted}>{food.name} · {food.quantity} {food.unit} · {food.caloriesKcal ?? '?'} kcal</Text>)}
         </>}
-        {entry.category === 'exercise' && <><Text style={styles.section}>{entry.data.activityName}</Text><Text style={styles.text}>{entry.data.durationMinutes} minutes · {entry.data.intensity}</Text><Text style={styles.muted}>{entry.data.estimatedCaloriesBurnedKcal === null ? 'Calories burned: unknown' : `${entry.data.estimatedCaloriesBurnedKcal} kcal estimated · ${entry.data.calorieEstimationSource}`}</Text></>}
+        {entry.category === 'exercise' && <><Text style={styles.section}>{entry.data.activityName}</Text><Text style={styles.text}>{entry.data.durationMinutes} minutes · {entry.data.intensity}{entry.data.estimatedCaloriesBurnedKcal === null ? '' : ` · ~${entry.data.estimatedCaloriesBurnedKcal} kcal burned`}</Text></>}
         {!!entry.note && <Text style={styles.text}>{entry.note}</Text>}
-      </View>
-      <View style={styles.card}>
         <AnalysisSummary ai={entry.ai} />
-        {analysisPending(entry.ai) && <Text style={styles.muted}>This summary refreshes briefly while you view the entry. Check for updates if it takes longer.</Text>}
-        <Action secondary disabled={query.isFetching || busy} onPress={() => { void query.refetch(); }}>{query.isFetching ? 'Checking…' : 'Check for updates'}</Action>
+        {entry.category === 'nutrition' && <Action secondary onPress={() => askKimo(mealQuestion(entry.title, entry.entryDate, entry.id))}>Ask Kimo about this meal</Action>}
+        <DetailsDisclosure>
+          <Text style={detailStyles.row}>Recorded: {new Date(entry.occurredAt).toLocaleString(undefined, { timeZone: entry.recordedTimezone })} ({entry.recordedTimezone}) · counted on {entry.entryDate}</Text>
+          {entry.category === 'nutrition' && entry.data.items.map(food => <Text key={food.id} style={detailStyles.row}>{food.name}: {food.nutritionSource === 'reference' && food.reference ? providerLabel(food.reference.provider) : food.nutritionSource === 'estimated' ? 'Estimated' : 'Entered manually'} · P {food.proteinG ?? '?'} g · C {food.carbohydratesG ?? '?'} g · F {food.fatG ?? '?'} g</Text>)}
+          {entry.category === 'exercise' && entry.data.estimatedCaloriesBurnedKcal !== null && <Text style={detailStyles.row}>Calories burned source: {entry.data.calorieEstimationSource}</Text>}
+          <Text style={detailStyles.row}>{analysisView(entry.ai).label}{entry.ai.errorCode ? ` (${entry.ai.errorCode})` : ''}</Text>
+          {analysisPending(entry.ai) && <Action secondary disabled={query.isFetching || busy} onPress={() => { void query.refetch(); }}>{query.isFetching ? 'Checking…' : 'Check for analysis'}</Action>}
+          <Text style={detailStyles.row}>Revision {entry.revision} · ID {entry.id}</Text>
+        </DetailsDisclosure>
       </View>
       {entry.attachments.map((attachment, i) => <View key={attachment.id} style={styles.card}>
         {attachment.type === 'image' ? <Image source={{ uri: `data:${attachment.mimeType};base64,${attachment.base64}` }} style={{ width: '100%', aspectRatio: (attachment.widthPx ?? 4) / (attachment.heightPx ?? 3), borderRadius: 10 }} contentFit="contain" accessibilityLabel={`Saved photo ${i + 1}`} /> : <Text style={styles.text}>Audio attachment{attachment.durationMs ? ` · ${Math.round(attachment.durationMs / 1000)} seconds` : ''}</Text>}
@@ -95,4 +99,10 @@ export default function EntryScreen() {
       </View> : <Action secondary disabled={busy} onPress={() => setConfirmDelete(true)}>Delete entry</Action>}
     </>}
   </UploadPage>;
+}
+
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
+function macroLine(items: { proteinG: number | null; carbohydratesG: number | null; fatG: number | null }[]) {
+  const sum = (key: 'proteinG' | 'carbohydratesG' | 'fatG') => Math.round(items.reduce((total, item) => total + (item[key] ?? 0), 0));
+  return `Protein ${sum('proteinG')} g · Carbs ${sum('carbohydratesG')} g · Fat ${sum('fatG')} g`;
 }

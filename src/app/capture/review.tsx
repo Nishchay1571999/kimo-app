@@ -8,6 +8,7 @@ import { entryService, useSaveEntry } from '@/features/entries/hooks';
 import { ApiError } from '@/lib/api/client';
 import { draftFacts } from '@/features/entries/draft';
 import { providerLabel } from '@/features/nutrition/schema';
+import { DetailsDisclosure, detailStyles } from '@/components/details-disclosure';
 import { entryFormSchema } from '@/features/upload/schema';
 import { uploadStore } from '@/features/upload/store/upload-store';
 import { Action, closeTo, draftRoute, StorageNotice, styles, UploadPage, useDraft } from '@/features/upload/components/shared';
@@ -31,15 +32,16 @@ export default function ReviewScreen() {
     <StorageNotice />
     <View style={styles.card}>
       <Text style={styles.section}>{v.title.trim() || 'Untitled draft'}</Text>
-      <Text style={styles.text}>Reporting date: {v.entryDate}</Text>
-      <Text style={styles.muted}>Occurred at: {v.occurredAt}</Text>
+      <Text style={styles.muted}>{v.entryDate}</Text>
       {v.category === 'nutrition' && <>
         <Text style={styles.text}>Meal: {v.mealCategory}</Text>
         {v.items.map((food, i) => <View key={i} style={{ gap: 4 }}>
           <Text style={styles.text}>{food.name || `Food ${i + 1}`} · {food.quantity} {food.unit}</Text>
           <Text style={styles.muted}>{food.caloriesKcal || 'Unknown'} kcal · Protein: {food.proteinG || 'unknown'} g · Carbs: {food.carbohydratesG || 'unknown'} g · Fat: {food.fatG || 'unknown'} g</Text>
-          {facts && 'items' in facts.data && facts.data.items && <Text style={styles.muted}>Nutrition source: {facts.data.items[i].nutritionSource === 'reference' && 'reference' in facts.data.items[i] ? providerLabel(String(facts.data.items[i].reference?.provider)) : facts.data.items[i].nutritionSource === 'estimated' ? 'Estimated' : 'Entered manually'}</Text>}
         </View>)}
+        {facts && 'items' in facts.data && facts.data.items && <DetailsDisclosure label="Nutrition sources">
+          {facts.data.items.map((item, i) => <Text key={i} style={detailStyles.row}>{v.items[i]?.name || `Food ${i + 1}`}: {item.nutritionSource === 'reference' && 'reference' in item ? providerLabel(String(item.reference?.provider)) : item.nutritionSource === 'estimated' ? 'Estimated' : 'Entered manually'}</Text>)}
+        </DetailsDisclosure>}
         {parsed.success && <Text style={styles.section}>{v.items.reduce((total, food) => total + Number(food.caloriesKcal), 0)} kcal total</Text>}
       </>}
       {v.category === 'exercise' && <>
@@ -62,7 +64,9 @@ export default function ReviewScreen() {
       if (!focused.current || !entryService.isCurrent(result.owner) || !result.cleaned) return;
       const currentDraft = uploadStore.getState().draft;
       if (currentDraft && currentDraft.id !== draft.id) return;
-      router.replace({ pathname: '/entries/[entryId]', params: { entryId: result.entry.id, date: result.entry.entryDate, origin: draft.origin } });
+      // New meals end on their effect on the day; edits return to the entry itself.
+      if (!draft.edit && result.entry.category === 'nutrition') router.replace({ pathname: '/entries/saved', params: { entryId: result.entry.id, date: result.entry.entryDate, origin: draft.origin } });
+      else router.replace({ pathname: '/entries/[entryId]', params: { entryId: result.entry.id, date: result.entry.entryDate, origin: draft.origin } });
     } })} style={styles.primary}><ButtonText>{draft.savedEntryId ? 'Finish local cleanup' : draft.edit ? 'Save changes' : 'Save entry'}</ButtonText></Button>
     <Action onPress={() => closeTo(nav.backToOrigin)}>Keep draft and close</Action>
     {confirmDiscard ? <View style={styles.card}>

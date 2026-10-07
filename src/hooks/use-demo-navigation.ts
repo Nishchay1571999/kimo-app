@@ -17,7 +17,7 @@ export function useDemoNavigation() {
   const origin = params.origin ?? 'home';
   const day: Href = { pathname: '/history/day/[date]', params: { date } };
   const origins: Record<string, Href> = {
-    home: { pathname: '/(tabs)', params: { date } }, profile: '/(tabs)/profile', history: '/history', ai: '/(tabs)/ai', day,
+    home: { pathname: '/(tabs)', params: { date } }, settings: '/settings', history: '/history', ai: '/(tabs)/ai', day,
   };
   return {
     ...params, date, origin, day,

@@ -19,9 +19,9 @@ export function ChatHistoryContent(props: DrawerContentComponentProps) {
   return (
     <DrawerContentScrollView {...props} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <DrawerItem
-        label="New chat"
+        label="Ask something new"
         icon={() => <SquarePen size={20} strokeWidth={1.75} color={theme.text} />}
-        accessibilityLabel="New chat"
+        accessibilityLabel="Ask something new"
         focused={activeRoute.name === 'new'}
         activeTintColor={theme.text}
         inactiveTintColor={theme.text}

@@ -7,19 +7,17 @@ import { ChatComposer, type ChatComposerProps } from './chat-composer';
 
 type ChatScreenProps = {
   children?: ReactNode;
-  models: ChatComposerProps['models'];
   value: string;
   onChangeText: (value: string) => void;
-  selectedModelId: string;
-  onModelChange: ChatComposerProps['onModelChange'];
   disabled?: boolean;
   isResponding?: boolean;
   onSend?: ChatComposerProps['onSend'];
   onStop?: ChatComposerProps['onStop'];
   onAttach?: ChatComposerProps['onAttach'];
+  placeholder?: string;
 };
 
-export function ChatScreen({ children, models, value, onChangeText, selectedModelId, onModelChange, disabled, isResponding, onSend, onStop, onAttach }: ChatScreenProps) {
+export function ChatScreen({ children, value, onChangeText, disabled, isResponding, onSend, onStop, onAttach, placeholder }: ChatScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const container = useRef<View>(null);
@@ -42,9 +40,8 @@ export function ChatScreen({ children, models, value, onChangeText, selectedMode
           {children}
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-          <ChatComposer value={value} onChangeText={onChangeText} models={models} disabled={disabled}
-            isResponding={isResponding} onSend={onSend} onStop={onStop} onAttach={onAttach}
-            selectedModelId={selectedModelId} onModelChange={onModelChange} />
+          <ChatComposer value={value} onChangeText={onChangeText} disabled={disabled} placeholder={placeholder}
+            isResponding={isResponding} onSend={onSend} onStop={onStop} onAttach={onAttach} />
         </View>
       </KeyboardAvoidingView>
     </View>
